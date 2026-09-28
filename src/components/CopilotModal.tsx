@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, Loader2, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
+import { Input } from './ui';
+import { Button } from './ui';
 interface Message {
   role: 'user' | 'assistant';
   content: string;
@@ -94,12 +96,14 @@ export default function CopilotModal() {
               </p>
             </div>
           </div>
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             onClick={() => setIsOpen(false)}
             className="text-primary-foreground/80 hover:text-primary-foreground transition-colors"
           >
             <X size={20} />
-          </button>
+          </Button>
         </div>
 
         {/* Messages Container */}
@@ -152,7 +156,7 @@ export default function CopilotModal() {
         {/* Input Area */}
         <div className="border-t border-border p-4 bg-card">
           <div className="flex gap-2">
-            <input
+            <Input
               id="copilot-input"
               type="text"
               value={input}
@@ -163,13 +167,15 @@ export default function CopilotModal() {
               disabled={loading}
               autoFocus
             />
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               onClick={() => handleSendMessage()}
               disabled={loading || !input.trim()}
               className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 disabled:opacity-50 transition-colors flex items-center gap-2"
             >
               <Send size={16} />
-            </button>
+            </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
             💡 Dica: Pergunte sobre ergonomia, especificações técnicas, cálculos estruturais ou

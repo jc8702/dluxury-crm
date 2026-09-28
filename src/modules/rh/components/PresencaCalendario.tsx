@@ -186,7 +186,9 @@ export function PresencaCalendario({ colaboradores, competencia, onChanged }: Pr
                     const color = statusColor[status] || '#28A745';
                     return (
                       <td key={d} className="p-0.5">
-                        <button
+                        <Button
+                          variant="outline"
+                          size="plain"
                           onClick={() => toggle(c.id, d)}
                           className="w-7 h-7 rounded flex items-center justify-center text-white text-[11px] font-bold border border-border"
                           style={{ background: color }}
@@ -195,7 +197,7 @@ export function PresencaCalendario({ colaboradores, competencia, onChanged }: Pr
                           data-status={status}
                         >
                           {statusLabel[status]}
-                        </button>
+                        </Button>
                       </td>
                     );
                   })}

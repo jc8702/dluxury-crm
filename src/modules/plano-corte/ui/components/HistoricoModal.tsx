@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -12,9 +12,10 @@ import {
   Loader2,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-// @todo migrar para Modal de @/components/ui (trocar isOpen → open)
 import { Modal } from '../../../../components/common';
+import { Select } from '../../../../components/ui';
 
+import { Input } from '../../../../components/ui';
 interface HistoricoModalProps {
   onLoadPlan: (plan: any) => void;
   onFechar: () => void;
@@ -61,7 +62,7 @@ export function HistoricoModal({ onLoadPlan, onFechar }: HistoricoModalProps) {
               className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors"
               size={18}
             />
-            <input
+            <Input
               type="text"
               placeholder="Buscar por nome do plano..."
               value={filtroTexto}
@@ -74,7 +75,7 @@ export function HistoricoModal({ onLoadPlan, onFechar }: HistoricoModalProps) {
               className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors"
               size={18}
             />
-            <select
+            <Select
               value={filtroProjeto}
               onChange={(e) => setFiltroProjeto(e.target.value)}
               className="w-full h-11 pl-11 pr-10 bg-input border border-border/80 rounded-xl text-sm focus:border-primary/50 outline-none transition-all appearance-none cursor-pointer text-foreground"
@@ -85,7 +86,7 @@ export function HistoricoModal({ onLoadPlan, onFechar }: HistoricoModalProps) {
                   {proj.nome}
                 </option>
               ))}
-            </select>
+            </Select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-muted-foreground">
               <svg
                 className="fill-current h-4 w-4"

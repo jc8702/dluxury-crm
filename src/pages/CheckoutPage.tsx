@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../components/ui';
 
 interface SubscriptionData {
   status: 'active' | 'trial' | 'overdue' | 'suspended' | 'inactive';
@@ -255,7 +256,9 @@ const CheckoutPage: React.FC = () => {
                 subData.status === 'overdue' ||
                 subData.status === 'suspended' ||
                 subData.status === 'inactive') && (
-                <button
+                <Button
+                  variant="plain"
+                  size="plain"
                   onClick={handlePaymentRedirect}
                   disabled={paying}
                   style={{
@@ -275,7 +278,7 @@ const CheckoutPage: React.FC = () => {
                   }}
                 >
                   {paying ? 'GERANDO PORTAL DE PAGAMENTO...' : 'IR PARA O PAGAMENTO SEGURO (ASAAS)'}
-                </button>
+                </Button>
               )}
 
               {error && (
@@ -294,7 +297,9 @@ const CheckoutPage: React.FC = () => {
               )}
 
               <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
-                <button
+                <Button
+                  variant="plain"
+                  size="plain"
                   onClick={fetchSubscription}
                   style={{
                     flex: 1,
@@ -309,8 +314,10 @@ const CheckoutPage: React.FC = () => {
                   }}
                 >
                   ATUALIZAR STATUS
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="plain"
+                  size="plain"
                   onClick={() => navigate('/painel')}
                   style={{
                     flex: 1,
@@ -325,7 +332,7 @@ const CheckoutPage: React.FC = () => {
                   }}
                 >
                   IR PARA O PAINEL
-                </button>
+                </Button>
               </div>
             </div>
           </div>

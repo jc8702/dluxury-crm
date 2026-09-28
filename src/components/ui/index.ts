@@ -30,3 +30,9 @@ export type { ModalProps, ConfirmDialogProps } from './Modal';
 
 export { Badge, StatusDot, Chip } from './Badge';
 export type { BadgeProps, StatusDotProps, ChipProps } from './Badge';
+
+export { FormActions } from './FormActions';
+export type { FormActionsProps } from './FormActions';
+
+export { BackButton } from './BackButton';
+export type { BackButtonProps } from './BackButton';

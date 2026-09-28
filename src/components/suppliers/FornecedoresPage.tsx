@@ -7,6 +7,7 @@ import { Button } from '../ui';
 import { Card } from '../ui';
 import FornecedorFormModal from './components/FornecedorFormModal';
 
+import { Input } from '../ui';
 const FornecedoresPage: React.FC = () => {
   const { error: toastError } = useToast();
   const { fornecedores, removeFornecedor, reloadInventoryData } = useInventory();
@@ -62,7 +63,7 @@ const FornecedoresPage: React.FC = () => {
             size={16}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]"
           />
-          <input
+          <Input
             className="input-base pl-10 w-full"
             placeholder="Buscar por nome ou CNPJ..."
             value={search}

@@ -9,6 +9,8 @@ import {
   XOctagon,
 } from 'lucide-react';
 import type { SimulationProgram, SimulationIssue } from '../../domain/types';
+import { Select } from '../../../../components/ui';
+import { Button } from '../../../../components/ui';
 
 interface TimelineControlsProps {
   program: SimulationProgram;
@@ -82,7 +84,9 @@ export default function TimelineControls({
         {/* Marcadores de Colisões/Erros e Warnings em cima da timeline */}
         <div className="absolute top-[8px] left-0 right-0 h-2 pointer-events-none w-full">
           {issueMarkers.map((marker) => (
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               key={marker.id}
               onClick={(e) => {
                 e.stopPropagation();
@@ -101,7 +105,7 @@ export default function TimelineControls({
               ) : (
                 <span className="w-1 h-1 bg-background rounded-full block" />
               )}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -110,15 +114,19 @@ export default function TimelineControls({
       <div className="flex flex-wrap items-center justify-between gap-4 text-sm">
         {/* Controles de Reprodução */}
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             onClick={() => handleStep(-1)}
             className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-all"
             title="Recuar 1s"
           >
             <ChevronLeft size={16} />
-          </button>
+          </Button>
 
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             onClick={() => onPlayingChange(!playing)}
             className="p-2.5 bg-accent hover:bg-accent/90 text-accent-foreground rounded-lg font-bold flex items-center justify-center transition-all"
             title={playing ? 'Pausar Simulação' : 'Iniciar Simulação'}
@@ -128,17 +136,21 @@ export default function TimelineControls({
             ) : (
               <Play size={16} fill="currentColor" />
             )}
-          </button>
+          </Button>
 
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             onClick={() => handleStep(1)}
             className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-all"
             title="Avançar 1s"
           >
             <ChevronRight size={16} />
-          </button>
+          </Button>
 
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             onClick={() => {
               onPlayingChange(false);
               onTempoChange(0);
@@ -147,7 +159,7 @@ export default function TimelineControls({
             title="Resetar Simulação"
           >
             <RotateCcw size={16} />
-          </button>
+          </Button>
         </div>
 
         {/* Marcador de Tempo Digital */}
@@ -162,7 +174,7 @@ export default function TimelineControls({
           {/* Multiplicador de Velocidade */}
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">VELOCIDADE:</span>
-            <select
+            <Select
               value={velocidade}
               onChange={(e) => onVelocidadeChange(Number(e.target.value))}
               className="bg-background border border-border text-foreground rounded-lg px-2 py-1 outline-none text-sm focus:border-accent font-medium"
@@ -172,7 +184,7 @@ export default function TimelineControls({
               <option value={1}>1.0x (Real)</option>
               <option value={2}>2.0x</option>
               <option value={5}>5.0x</option>
-            </select>
+            </Select>
           </div>
 
           {/* Habilitar parar em colisão */}

@@ -23,6 +23,7 @@ import {
   ChevronRight,
   Star,
 } from 'lucide-react';
+import { Button } from '../components/ui';
 
 const LandingPage: React.FC = () => {
   const { user } = useAuth();
@@ -168,18 +169,22 @@ const LandingPage: React.FC = () => {
           </a>
 
           <div className="flex items-center gap-3 ml-4">
-            <button
+            <Button
+              variant="outline"
+              size="plain"
               onClick={() => navigate('/login')}
               className="px-5 py-2.5 text-sm font-bold text-foreground bg-card/50 rounded-xl border border-border/50 hover:border-primary/50 hover:bg-primary/10 transition-all duration-300"
             >
               Entrar
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="plain"
+              size="plain"
               onClick={() => navigate('/signup')}
               className="px-6 py-2.5 text-sm font-bold text-primary-foreground bg-primary hover:bg-primary-hover rounded-xl shadow-[0_4px_14px_rgb(245,158,11,0.2)] hover:shadow-[0_6px_20px_rgb(245,158,11,0.3)] hover:-translate-y-0.5 transition-all duration-300"
             >
               Teste Grátis
-            </button>
+            </Button>
           </div>
         </div>
       </nav>
@@ -212,14 +217,16 @@ const LandingPage: React.FC = () => {
           className="flex flex-col sm:flex-row items-center gap-6 animate-slide-in"
           style={{ animationDelay: '0.3s' }}
         >
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             onClick={() => navigate('/signup')}
             className="group relative flex items-center justify-center gap-2 px-8 py-4 text-base font-black tracking-wide text-primary-foreground uppercase bg-primary hover:bg-primary-hover rounded-xl shadow-[0_8px_20px_rgb(245,158,11,0.2)] hover:shadow-[0_12px_25px_rgb(245,158,11,0.3)] hover:-translate-y-1 transition-all duration-300 overflow-hidden"
           >
             <span className="relative z-10">Começar Teste de 14 Dias</span>
             <ChevronRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
-          </button>
+          </Button>
 
           <a
             href="#modulos"
@@ -367,12 +374,14 @@ const LandingPage: React.FC = () => {
               <span className="text-4xl font-black">R$ 97</span>
               <span className="text-muted-foreground font-semibold mb-1">/mês</span>
             </div>
-            <button
+            <Button
+              variant="outline"
+              size="plain"
               onClick={() => navigate('/signup')}
               className="w-full py-3 px-4 mb-8 text-sm font-bold bg-secondary/50 border border-border/50 text-foreground rounded-xl hover:bg-secondary transition-colors"
             >
               Começar Teste Grátis
-            </button>
+            </Button>
             <ul className="flex flex-col gap-4 text-sm text-foreground/80 mt-auto">
               <li className="flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-accent shrink-0" /> CRM & Clientes
@@ -402,12 +411,14 @@ const LandingPage: React.FC = () => {
               <span className="text-5xl font-black text-foreground">R$ 197</span>
               <span className="text-muted-foreground font-semibold mb-2">/mês</span>
             </div>
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               onClick={() => navigate('/signup')}
               className="w-full py-4 px-4 mb-8 text-sm font-black text-primary-foreground bg-primary hover:bg-primary-hover rounded-xl shadow-[0_8px_20px_rgb(245,158,11,0.2)] hover:shadow-[0_12px_25px_rgb(245,158,11,0.3)] transition-all hover:-translate-y-1"
             >
               Começar Teste Grátis
-            </button>
+            </Button>
             <ul className="flex flex-col gap-4 text-sm font-medium mt-auto">
               <li className="flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-primary shrink-0" /> Tudo do Plano Basic
@@ -439,12 +450,14 @@ const LandingPage: React.FC = () => {
               <span className="text-4xl font-black">R$ 397</span>
               <span className="text-muted-foreground font-semibold mb-1">/mês</span>
             </div>
-            <button
+            <Button
+              variant="outline"
+              size="plain"
               onClick={() => navigate('/signup')}
               className="w-full py-3 px-4 mb-8 text-sm font-bold bg-secondary/50 border border-border/50 text-foreground rounded-xl hover:bg-secondary transition-colors"
             >
               Falar com Consultor
-            </button>
+            </Button>
             <ul className="flex flex-col gap-4 text-sm text-foreground/80 mt-auto">
               <li className="flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-accent shrink-0" /> Tudo do Plano PRO

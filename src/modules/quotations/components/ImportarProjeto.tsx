@@ -67,7 +67,9 @@ export function ImportarProjeto({
               </p>
             </div>
             <div className="flex justify-center">
-              <button
+              <Button
+                variant="outline"
+                size="plain"
                 type="button"
                 onClick={() => {
                   setIsCSVModalOpen(true);
@@ -92,7 +94,7 @@ export function ImportarProjeto({
                     Formatos: CutList Plus, SketchUp Report, Promob CSV
                   </p>
                 </div>
-              </button>
+              </Button>
             </div>
           </div>
         )}

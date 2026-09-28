@@ -4,6 +4,7 @@ import { ArrowLeft, Check, ArrowRight, Loader, Info, AlertCircle } from 'lucide-
 import { useToast } from '../context/ToastContext';
 import { Button } from '../components/ui';
 import { Input } from '../components/common';
+import { Select } from '../components/ui';
 
 const _MEIOS_COM_TAXA = ['boleto', 'cartao_credito', 'cheque', 'cartao_debito'];
 
@@ -136,7 +137,7 @@ export default function FinanceiroTitulosReceberWizard({
           <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block ml-1">
             Cliente / Origem
           </label>
-          <select
+          <Select
             className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary uppercase font-bold"
             value={formData.cliente_id}
             onChange={(e) => setFormData({ ...formData, cliente_id: e.target.value })}
@@ -147,13 +148,13 @@ export default function FinanceiroTitulosReceberWizard({
                 {String(c.nome || c.name || c.razao_social).toUpperCase()}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="space-y-2">
           <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block ml-1">
             Classe Financeira
           </label>
-          <select
+          <Select
             className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary uppercase font-bold"
             value={formData.classe_financeira_id}
             onChange={(e) => setFormData({ ...formData, classe_financeira_id: e.target.value })}
@@ -166,7 +167,7 @@ export default function FinanceiroTitulosReceberWizard({
                   {c.codigo} - {c.nome.toUpperCase()}
                 </option>
               ))}
-          </select>
+          </Select>
         </div>
         <Input
           label="Número do Documento / Título"
@@ -200,7 +201,7 @@ export default function FinanceiroTitulosReceberWizard({
           <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block ml-1">
             Forma de Recebimento
           </label>
-          <select
+          <Select
             className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary uppercase font-bold"
             value={formData.forma_recebimento_id}
             onChange={(e) => {
@@ -214,7 +215,7 @@ export default function FinanceiroTitulosReceberWizard({
                 {f.nome.toUpperCase()}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
 
         {/* Taxa Financeira â Sempre disponível para ajuste manual */}
@@ -315,7 +316,7 @@ export default function FinanceiroTitulosReceberWizard({
                   <label className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">
                     Projeto
                   </label>
-                  <select
+                  <Select
                     className="w-full bg-background border border-border rounded-xl px-3 py-2 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-primary uppercase font-bold"
                     value={r.projeto_id}
                     onChange={(e) => {
@@ -331,13 +332,13 @@ export default function FinanceiroTitulosReceberWizard({
                         {String(p.client_name || p.cliente_nome || 'Sem Cliente').toUpperCase()}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">
                     Classe
                   </label>
-                  <select
+                  <Select
                     className="w-full bg-background border border-border rounded-xl px-3 py-2 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-primary uppercase font-bold"
                     value={r.classe_id}
                     onChange={(e) => {
@@ -352,7 +353,7 @@ export default function FinanceiroTitulosReceberWizard({
                         {c.nome.toUpperCase()}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
                 <Input
                   type="number"
@@ -514,14 +515,10 @@ export default function FinanceiroTitulosReceberWizard({
             <Button
               variant="primary"
               className="px-6 uppercase font-black italic text-xs tracking-widest bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90 border-[hsl(var(--success))] hover:border-[hsl(var(--success))]/90 text-black shadow-lg shadow-[hsl(var(--success))]/20"
-              disabled={loading}
+              isLoading={loading}
               onClick={handleSave}
             >
-              {loading ? (
-                <Loader className="animate-spin" size={16} />
-              ) : (
-                'CONFIRMAR E GERAR TÍTULOS'
-              )}
+              CONFIRMAR E GERAR TÍTULOS
             </Button>
           )}
         </div>

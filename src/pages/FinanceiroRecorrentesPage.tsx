@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { Repeat, Plus, Trash2, Edit2, Play, ArrowLeft } from 'lucide-react';
+import { Repeat, Plus, Trash2, Edit2, Play } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
 import { TableSkeleton } from '../components/common/Skeleton';
 import { Button, Card, CardHeader, CardTitle } from '../components/ui';
 import { CardBody as CardContent } from '../components/ui';
 import { Modal, Badge, Input } from '../components/common';
+import { Select } from '../components/ui';
+import { BackButton } from '../components/ui';
 
 export default function FinanceiroRecorrentesPage() {
   const { success, error } = useToast();
@@ -51,10 +53,12 @@ export default function FinanceiroRecorrentesPage() {
         api.financeiro.formasPagamento.list(),
       ]);
       const [recsRes, clsRes, fornsRes, ctsRes, fmsRes] = results.map((r) =>
-        r.status === 'fulfilled' ? r.value : []
+        r.status === 'fulfilled' ? r.value : [],
       );
-      if (results[0].status === 'rejected') console.error('contasRecorrentes.list falhou', results[0].reason);
-      if (results[1].status === 'rejected') console.error('classesFinanceiras.list falhou', results[1].reason);
+      if (results[0].status === 'rejected')
+        console.error('contasRecorrentes.list falhou', results[0].reason);
+      if (results[1].status === 'rejected')
+        console.error('classesFinanceiras.list falhou', results[1].reason);
       setRows(normalizeList(recsRes));
       setClasses(normalizeList(clsRes));
       setFornecedores(normalizeList(fornsRes));
@@ -152,23 +156,10 @@ export default function FinanceiroRecorrentesPage() {
       className="page-container anim-fade-in"
       style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}
     >
-      <Button
-        variant="ghost"
+      <BackButton
+        label="Voltar ao Painel Financeiro"
         onClick={() => (window.location.hash = '#/financeiro')}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          fontSize: '0.75rem',
-          color: 'hsl(var(--muted-foreground))',
-          marginBottom: '1rem',
-          padding: 0,
-          height: 'auto',
-          background: 'transparent',
-        }}
-      >
-        <ArrowLeft size={16} /> Voltar ao Painel Financeiro
-      </Button>
+      />
       <div
         className="page-header"
         style={{
@@ -318,7 +309,7 @@ export default function FinanceiroRecorrentesPage() {
             <label className="mb-2 block text-sm font-medium text-foreground/90">
               Classe Financeira <span className="text-destructive">*</span>
             </label>
-            <select
+            <Select
               className="input-base"
               value={form.classe_financeira_id}
               onChange={(e) => setForm({ ...form, classe_financeira_id: e.target.value })}
@@ -330,9 +321,11 @@ export default function FinanceiroRecorrentesPage() {
                   {c.nome.toUpperCase()} ({c.codigo})
                 </option>
               ))}
-            </select>
+            </Select>
             {classes.length === 0 && (
-              <p className="text-sm text-destructive mt-1">Nenhuma classe encontrada — cadastre em Financeiro &gt; Classes</p>
+              <p className="text-sm text-destructive mt-1">
+                Nenhuma classe encontrada — cadastre em Financeiro &gt; Classes
+              </p>
             )}
           </div>
 
@@ -340,7 +333,7 @@ export default function FinanceiroRecorrentesPage() {
             <label className="mb-2 block text-sm font-medium text-foreground/90">
               Fornecedor (Opcional)
             </label>
-            <select
+            <Select
               className="input-base"
               value={form.fornecedor_id}
               onChange={(e) => setForm({ ...form, fornecedor_id: e.target.value })}
@@ -351,14 +344,14 @@ export default function FinanceiroRecorrentesPage() {
                   {f.nome.toUpperCase()}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
 
           <div className="form-group">
             <label className="mb-2 block text-sm font-medium text-foreground/90">
               Conta Bancária Padrão
             </label>
-            <select
+            <Select
               className="input-base"
               value={form.conta_bancaria_id}
               onChange={(e) => setForm({ ...form, conta_bancaria_id: e.target.value })}
@@ -369,14 +362,14 @@ export default function FinanceiroRecorrentesPage() {
                   {c.nome.toUpperCase()}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
 
           <div className="form-group">
             <label className="mb-2 block text-sm font-medium text-foreground/90">
               Forma de Pagamento
             </label>
-            <select
+            <Select
               className="input-base"
               value={form.forma_pagamento_id}
               onChange={(e) => setForm({ ...form, forma_pagamento_id: e.target.value })}
@@ -387,7 +380,7 @@ export default function FinanceiroRecorrentesPage() {
                   {f.nome.toUpperCase()}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
 
           <div
@@ -441,7 +434,7 @@ export default function FinanceiroRecorrentesPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div className="form-group">
             <label className="mb-2 block text-sm font-medium text-foreground/90">Mês</label>
-            <select
+            <Select
               className="input-base"
               value={gerarMes}
               onChange={(e) => setGerarMes(Number(e.target.value))}
@@ -451,11 +444,11 @@ export default function FinanceiroRecorrentesPage() {
                   {new Date(2000, i).toLocaleString('pt-BR', { month: 'long' }).toUpperCase()}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="form-group">
             <label className="mb-2 block text-sm font-medium text-foreground/90">Ano</label>
-            <input
+            <Input
               type="number"
               className="input-base"
               value={gerarAno}

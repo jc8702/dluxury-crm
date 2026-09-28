@@ -4,7 +4,6 @@ import {
   Plus,
   Search,
   Loader2,
-  Save,
   Tag,
   DollarSign,
   Package,
@@ -14,7 +13,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { api } from '../../lib/api';
-import { Button, Card } from '../../components/ui';
+import { Button, Card, FormActions } from '../../components/ui';
 import { CardBody as CardContent } from '../../components/ui';
 import {
   Input,
@@ -30,9 +29,9 @@ import DataTable from '../common/DataTable';
 const CATEGORIAS_TAXONOMIA = [
   { value: 'CHP', label: 'Chapas (MDF/MDP)' },
   { value: 'FBD', label: 'Fitas de Borda' },
-  { value: 'FER', label: 'Ferragens (Dobradi�as, Corredi�as)' },
-  { value: 'AC', label: 'Acess�rios' },
-  { value: 'MD', label: 'Madeiras Maci�as' },
+  { value: 'FER', label: 'Ferragens (Dobradiças, Corrediças)' },
+  { value: 'AC', label: 'Acessórios' },
+  { value: 'MD', label: 'Madeiras Maciças' },
   { value: 'ACM', label: 'ACM / Metais' },
   { value: 'VID', label: 'Vidros / Espelhos' },
   { value: 'OUT', label: 'Outros Insumos' },
@@ -157,10 +156,10 @@ const SKUPage: React.FC = () => {
           </div>
           <div>
             <h2 className="text-2xl font-bold tracking-tight uppercase flex items-center gap-2">
-              Cat�logo de Pe�as / SKUs
+              Catálogo de Peças / SKUs
             </h2>
             <p className="text-xs text-muted-foreground mt-1">
-              Gerenciamento at�mico de insumos t�cnicos e acess�rios.
+              Gerenciamento atómico de insumos técnicos e acessórios.
             </p>
           </div>
         </div>
@@ -183,7 +182,7 @@ const SKUPage: React.FC = () => {
             />
             <Input
               className="pl-10"
-              placeholder="Buscar por descri��o, c�digo ou categoria..."
+              placeholder="Buscar por descrição, código ou categoria..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -202,13 +201,13 @@ const SKUPage: React.FC = () => {
         ) : (
           <DataTable
             headers={[
-              'C�digo SKU',
+              'Código SKU',
               'Categoria',
               'Nome do Item',
               'Unidade',
-              'Pre�o Base',
+              'Preço Base',
               'Status',
-              'A��es',
+              'Ações',
             ]}
             data={filteredSkus}
             renderRow={(s) => (
@@ -237,16 +236,18 @@ const SKUPage: React.FC = () => {
                   </span>
                 </td>
                 <td className="p-4">
-                  <button
+                  <Button
+                    variant="plain"
+                    size="plain"
                     onClick={() => openEdit(s)}
                     className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-primary transition-colors"
                   >
                     <Edit size={16} />
-                  </button>
+                  </Button>
                 </td>
               </>
             )}
-            emptyMessage="Nenhum SKU encontrado no cat�logo."
+            emptyMessage="Nenhum SKU encontrado no catálogo."
           />
         )}
       </div>
@@ -284,7 +285,7 @@ const SKUPage: React.FC = () => {
               <Tag size={16} className="absolute left-3 top-9 text-muted-foreground z-10" />
               <Input
                 required
-                label="C�digo SKU *"
+                label="Código SKU *"
                 className="pl-10"
                 placeholder="Ex: CHP-0001"
                 value={formData.sku_code}
@@ -298,9 +299,9 @@ const SKUPage: React.FC = () => {
             <Package size={16} className="absolute left-3 top-9 text-muted-foreground z-10" />
             <Input
               required
-              label="Nome da Pe�a / SKU *"
+              label="Nome da Peça / SKU *"
               className="pl-10"
-              placeholder="Ex: Dobradi�a 35mm Click"
+              placeholder="Ex: Dobradiça 35mm Click"
               value={formData.nome}
               onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
             />
@@ -335,8 +336,8 @@ const SKUPage: React.FC = () => {
                 step="0.0001"
                 label={
                   calcModoChapa
-                    ? 'Pre�o Base Final Calculado por M² (R$) *'
-                    : 'Pre�o Base de Custo (R$) *'
+                    ? 'Preço Base Final Calculado por M² (R$) *'
+                    : 'Preço Base de Custo (R$) *'
                 }
                 className={`pl-10 ${calcModoChapa ? 'bg-primary/5 border-primary/20 font-bold' : ''}`}
                 placeholder="0.00"
@@ -357,7 +358,7 @@ const SKUPage: React.FC = () => {
                   onChange={(e) => setCalcModoChapa(e.target.checked)}
                 />
                 <span className="text-sm font-semibold text-foreground">
-                  Calcular pre�o base a partir do valor da Chapa Inteira
+                  Calcular preço base a partir do valor da Chapa Inteira
                 </span>
               </label>
 
@@ -440,19 +441,11 @@ const SKUPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex gap-4 mt-4">
-            <Button type="submit" className="flex-1" disabled={saving}>
-              {saving ? (
-                <Loader2 className="animate-spin mr-2" size={20} />
-              ) : (
-                <Save className="mr-2" size={20} />
-              )}
-              Salvar SKU
-            </Button>
-            <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>
-              Cancelar
-            </Button>
-          </div>
+          <FormActions
+            onCancel={() => setIsModalOpen(false)}
+            loading={saving}
+            submitLabel="Salvar SKU"
+          />
         </form>
       </Modal>
     </div>

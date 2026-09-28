@@ -40,6 +40,7 @@ import type {
   CollisionPolicy,
 } from '../../domain/types';
 import type { Peca } from '../../../plano-corte/domain/types';
+import { useToast } from '@/context/ToastContext';
 
 // NOVAS IMPORTAÇÕES DO MOTOR INDUSTRIAL CNC
 import {
@@ -66,6 +67,8 @@ import {
 import { salvarConfigCNC, carregarConfigCNC } from '../../infrastructure/persistence';
 import type { GhostPreviewItem } from '../../domain/types';
 
+import { Input } from '../../../../components/ui';
+import { Button } from '../../../../components/ui';
 type ModoSimulador = 'rapida' | 'carregar';
 type ModoExibicao = 'layout' | 'simulacao' | 'verificacao';
 
@@ -220,6 +223,7 @@ function converterPlanoParaLayouts(plano: PlanoCorteCarregado): LayoutSimulacao[
 }
 
 export default function SimuladorCortePage() {
+  const { error: toastError } = useToast();
   const [modo, setModo] = useState<ModoSimulador>('rapida');
   const [planos, setPlanos] = useState<PlanoCorteCarregado[]>([]);
   const [planoAtivo, setPlanoAtivo] = useState<PlanoCorteCarregado | null>(null);
@@ -355,8 +359,13 @@ export default function SimuladorCortePage() {
           );
           if (erroDetectado) {
             setPlaying(false);
-            alert(
-              `[SIMULAÇÃO CNC INTERROMPIDA]\n\nColisão ou anomalia mecânica detectada:\n${erroDetectado.mensagem}\nPosição: X:${erroDetectado.posicao.x.toFixed(1)} Y:${erroDetectado.posicao.y.toFixed(1)} Z:${erroDetectado.posicao.z.toFixed(1)}\n\nO cabeçote parou no ponto do impacto.\n\nConfigure a Política de Colisão para "Sugerir Ajuste" ou "Auto-ajustar" no painel CNC para obter recomendações.`,
+            setTimeout(
+              () =>
+                toastError(
+                  'Simulação CNC interrompida',
+                  `Colisão ou anomalia mecânica detectada: ${erroDetectado.mensagem} — posição X:${erroDetectado.posicao.x.toFixed(1)} Y:${erroDetectado.posicao.y.toFixed(1)} Z:${erroDetectado.posicao.z.toFixed(1)}. Configure a Política de Colisão para "Sugerir Ajuste" ou "Auto-ajustar" no painel CNC para obter recomendações.`,
+                ),
+              0,
             );
             return erroDetectado.tempo; // para no instante exato da colisão
           }
@@ -380,7 +389,14 @@ export default function SimuladorCortePage() {
     }, 30); // ~33 FPS para suavidade de 3D
 
     return () => clearInterval(interval);
-  }, [playing, program, velocidadeSimulacao, stopOnCollision, cncConfig.machine.collisionPolicy]);
+  }, [
+    playing,
+    program,
+    velocidadeSimulacao,
+    stopOnCollision,
+    cncConfig.machine.collisionPolicy,
+    toastError,
+  ]);
 
   // Reseta timeline ao trocar de layout
   useEffect(() => {
@@ -798,17 +814,21 @@ export default function SimuladorCortePage() {
             </p>
           </div>
         </div>
-        <button
+        <Button
+          variant="outline"
+          size="plain"
           onClick={() => setTelaCheia(!telaCheia)}
           className="btn bg-muted hover:bg-muted/80 border border-border p-2 rounded-lg transition-all"
           title={telaCheia ? 'SAIR DE TELA CHEIA' : 'TELA CHEIA'}
         >
           {telaCheia ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-        </button>
+        </Button>
       </div>
 
       <div className="flex gap-1 bg-muted p-1 rounded-xl mb-6 w-fit">
-        <button
+        <Button
+          variant="plain"
+          size="plain"
           onClick={() => handleTrocarModo('rapida')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
             modo === 'rapida'
@@ -818,8 +838,10 @@ export default function SimuladorCortePage() {
         >
           <Zap size={14} />
           SIMULAÇÃO RÁPIDA
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="plain"
+          size="plain"
           onClick={() => handleTrocarModo('carregar')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
             modo === 'carregar'
@@ -829,7 +851,7 @@ export default function SimuladorCortePage() {
         >
           <Upload size={14} />
           CARREGAR PLANO
-        </button>
+        </Button>
       </div>
 
       {/* MODO SIMULAÇÃO RÁPIDA */}
@@ -843,7 +865,9 @@ export default function SimuladorCortePage() {
               </h3>
               <div className="grid grid-cols-2 gap-2 mb-3">
                 {DEFAULT_CHAPAS.map((c, i) => (
-                  <button
+                  <Button
+                    variant="plain"
+                    size="plain"
                     key={i}
                     onClick={() => handlePredefChapa(i)}
                     className={`text-sm text-left p-2 rounded-lg border transition-all ${
@@ -853,13 +877,13 @@ export default function SimuladorCortePage() {
                     }`}
                   >
                     {c.label}
-                  </button>
+                  </Button>
                 ))}
               </div>
               <div className="grid grid-cols-3 gap-2 text-sm">
                 <div>
                   <label className="text-muted-foreground block mb-1">COMPR. (MM)</label>
-                  <input
+                  <Input
                     type="number"
                     value={chapaLargura}
                     onChange={(e) => {
@@ -871,7 +895,7 @@ export default function SimuladorCortePage() {
                 </div>
                 <div>
                   <label className="text-muted-foreground block mb-1">LARG. (MM)</label>
-                  <input
+                  <Input
                     type="number"
                     value={chapaAltura}
                     onChange={(e) => {
@@ -883,7 +907,7 @@ export default function SimuladorCortePage() {
                 </div>
                 <div>
                   <label className="text-muted-foreground block mb-1">ESP. (MM)</label>
-                  <input
+                  <Input
                     type="number"
                     value={chapaEspessura}
                     onChange={(e) => {
@@ -899,12 +923,14 @@ export default function SimuladorCortePage() {
             <div className="bg-[var(--ui-surface)]/95 backdrop-blur-md border border-[var(--ui-border)] rounded-[var(--ui-radius-lg)] p-4 shadow-[var(--ui-shadow-1)]">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-accent font-bold text-xs tracking-wider">PEÇAS</h3>
-                <button
+                <Button
+                  variant="plain"
+                  size="plain"
                   onClick={handleAddPeca}
                   className="flex items-center gap-1 text-sm text-accent hover:text-foreground transition-colors"
                 >
                   <Plus size={12} /> ADICIONAR
-                </button>
+                </Button>
               </div>
               <div className="space-y-2 max-h-[280px] overflow-y-auto custom-scrollbar pr-1">
                 {pecasInput.map((peca, idx) => (
@@ -913,14 +939,16 @@ export default function SimuladorCortePage() {
                       <span className="text-muted-foreground text-sm font-semibold">
                         PEÇA {idx + 1}
                       </span>
-                      <button
+                      <Button
+                        variant="plain"
+                        size="plain"
                         onClick={() => handleRemovePeca(peca.id)}
                         className="text-muted-foreground hover:text-destructive transition-colors"
                       >
                         <Trash2 size={12} />
-                      </button>
+                      </Button>
                     </div>
-                    <input
+                    <Input
                       type="text"
                       value={peca.nome}
                       onChange={(e) =>
@@ -932,7 +960,7 @@ export default function SimuladorCortePage() {
                     <div className="grid grid-cols-4 gap-1.5">
                       <div>
                         <label className="text-muted-foreground text-sm block">COMP.</label>
-                        <input
+                        <Input
                           type="number"
                           value={peca.comprimento}
                           onChange={(e) =>
@@ -943,7 +971,7 @@ export default function SimuladorCortePage() {
                       </div>
                       <div>
                         <label className="text-muted-foreground text-sm block">LARG.</label>
-                        <input
+                        <Input
                           type="number"
                           value={peca.largura}
                           onChange={(e) =>
@@ -954,7 +982,7 @@ export default function SimuladorCortePage() {
                       </div>
                       <div>
                         <label className="text-muted-foreground text-sm block">ESP.</label>
-                        <input
+                        <Input
                           type="number"
                           value={peca.espessura}
                           onChange={(e) =>
@@ -965,7 +993,7 @@ export default function SimuladorCortePage() {
                       </div>
                       <div>
                         <label className="text-muted-foreground text-sm block">QTD</label>
-                        <input
+                        <Input
                           type="number"
                           min={1}
                           value={peca.quantidade}
@@ -983,7 +1011,9 @@ export default function SimuladorCortePage() {
                   </div>
                 ))}
               </div>
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 onClick={executarSimulacao}
                 disabled={processando}
                 className="w-full mt-3 flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-sm py-2.5 rounded-lg transition-all disabled:opacity-50"
@@ -997,7 +1027,7 @@ export default function SimuladorCortePage() {
                     <Play size={14} /> EXECUTAR NESTING
                   </>
                 )}
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -1011,7 +1041,9 @@ export default function SimuladorCortePage() {
                   <div className="flex flex-col gap-2 bg-card border border-border rounded-xl p-3">
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <div className="flex gap-1 bg-background p-1 rounded-lg border border-border">
-                        <button
+                        <Button
+                          variant="plain"
+                          size="plain"
                           onClick={() => setModoExibicao('layout')}
                           className={`px-3 py-1.5 rounded text-sm font-bold transition-all ${
                             modoExibicao === 'layout'
@@ -1020,8 +1052,10 @@ export default function SimuladorCortePage() {
                           }`}
                         >
                           PREVIEW LAYOUT
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="plain"
+                          size="plain"
                           onClick={() => setModoExibicao('simulacao')}
                           className={`px-3 py-1.5 rounded text-sm font-bold transition-all ${
                             modoExibicao === 'simulacao'
@@ -1030,8 +1064,10 @@ export default function SimuladorCortePage() {
                           }`}
                         >
                           SIMULAÇÃO CNC
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="plain"
+                          size="plain"
                           onClick={() => setModoExibicao('verificacao')}
                           className={`px-3 py-1.5 rounded text-sm font-bold transition-all ${
                             modoExibicao === 'verificacao'
@@ -1040,75 +1076,93 @@ export default function SimuladorCortePage() {
                           }`}
                         >
                           VERIFICAÇÃO CAM
-                        </button>
+                        </Button>
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <button
+                        <Button
+                          variant="plain"
+                          size="plain"
                           onClick={() => handleNavegarChapa(-1)}
                           className="p-1.5 hover:bg-muted rounded-lg text-muted-foreground hover:text-accent transition-all"
                         >
                           <ChevronLeft size={16} />
-                        </button>
+                        </Button>
                         <span className="text-foreground text-sm font-semibold min-w-[50px] text-center">
                           {indiceChapa + 1}/{layouts.length}
                         </span>
-                        <button
+                        <Button
+                          variant="plain"
+                          size="plain"
                           onClick={() => handleNavegarChapa(1)}
                           className="p-1.5 hover:bg-muted rounded-lg text-muted-foreground hover:text-accent transition-all"
                         >
                           <ChevronRight size={16} />
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
                     {/* Toggles de Visualização 3D */}
                     <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/60 text-sm">
-                      <button
+                      <Button
+                        variant="plain"
+                        size="plain"
                         onClick={() => setMostrarGrade(!mostrarGrade)}
                         className={`px-2 py-1 rounded font-semibold ${mostrarGrade ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                       >
                         GRADE
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="plain"
+                        size="plain"
                         onClick={() => setMostrarCotas(!mostrarCotas)}
                         className={`px-2 py-1 rounded font-semibold ${mostrarCotas ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                       >
                         COTAS
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="plain"
+                        size="plain"
                         onClick={() => setMostrarRetalhos(!mostrarRetalhos)}
                         className={`px-2 py-1 rounded font-semibold ${mostrarRetalhos ? 'bg-success/15 text-success' : 'bg-muted/45 text-muted-foreground'}`}
                       >
                         SOBRAS
-                      </button>
+                      </Button>
 
                       <span className="text-muted-foreground font-bold">|</span>
 
-                      <button
+                      <Button
+                        variant="plain"
+                        size="plain"
                         onClick={() => setMostrarMaquina(!mostrarMaquina)}
                         className={`px-2 py-1 rounded font-semibold ${mostrarMaquina ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                       >
                         MÁQUINA
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="plain"
+                        size="plain"
                         onClick={() => setMostrarStock(!mostrarStock)}
                         className={`px-2 py-1 rounded font-semibold ${mostrarStock ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                       >
                         USINAGEM (STOCK)
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="plain"
+                        size="plain"
                         onClick={() => setMostrarClamps(!mostrarClamps)}
                         className={`px-2 py-1 rounded font-semibold ${mostrarClamps ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                       >
                         GARRAS
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="plain"
+                        size="plain"
                         onClick={() => setMostrarCaminho(!mostrarCaminho)}
                         className={`px-2 py-1 rounded font-semibold ${mostrarCaminho ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                       >
                         TOOLPATH
-                      </button>
+                      </Button>
                     </div>
                   </div>
 
@@ -1153,28 +1207,36 @@ export default function SimuladorCortePage() {
                 {/* PAINEL DE INFORMAÇÕES E ANÁLISE DE SEGURANÇA */}
                 <div className="w-full lg:w-80 flex flex-col gap-4 shrink-0 lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto lg:sticky lg:top-4 custom-scrollbar">
                   <div className="flex gap-2">
-                    <button
+                    <Button
+                      variant="outline"
+                      size="plain"
                       onClick={handleExportRelatorio}
                       className="flex-1 flex items-center justify-center gap-1.5 bg-muted hover:bg-muted border border-border text-foreground text-sm font-bold py-2.5 rounded-lg transition-all"
                     >
                       <FileCheck size={14} className="text-accent" /> RELATÓRIO CNC
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="plain"
                       onClick={handleExportRelatorioSeguranca}
                       className="flex-1 flex items-center justify-center gap-1.5 bg-muted hover:bg-muted border border-border text-foreground text-sm font-bold py-2.5 rounded-lg transition-all"
                     >
                       <ShieldAlert size={14} className="text-destructive" /> SEGURANÇA
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="plain"
                       onClick={handleExportEtiquetas}
                       className="flex-1 flex items-center justify-center gap-1.5 bg-muted hover:bg-muted border border-border text-foreground text-sm font-bold py-2.5 rounded-lg transition-all"
                     >
                       <Box size={14} className="text-success" /> ETIQUETAS
-                    </button>
+                    </Button>
                   </div>
 
                   {/* TOGGLE CONFIGURAÇÃO CNC */}
-                  <button
+                  <Button
+                    variant="plain"
+                    size="plain"
                     onClick={() => setMostrarConfigCNC(!mostrarConfigCNC)}
                     className={`flex items-center justify-center gap-1.5 text-sm font-bold py-2 rounded-lg transition-all ${
                       mostrarConfigCNC
@@ -1184,7 +1246,7 @@ export default function SimuladorCortePage() {
                   >
                     <Settings size={14} />
                     {mostrarConfigCNC ? 'ESCONDER CONFIG CNC' : 'CONFIGURAÇÃO CNC'}
-                  </button>
+                  </Button>
 
                   {/* PAINEL DE CONFIGURAÇÃO CNC */}
                   {mostrarConfigCNC && (
@@ -1308,7 +1370,9 @@ export default function SimuladorCortePage() {
                       ? chaps.reduce((s, l) => s + l.aproveitamento_percentual, 0) / chaps.length
                       : 0;
                   return (
-                    <button
+                    <Button
+                      variant="outline"
+                      size="plain"
                       key={plano.id}
                       onClick={() => handleCarregarPlano(plano)}
                       className="bg-muted/50 hover:bg-muted border border-border hover:border-accent/30 rounded-xl p-4 text-left transition-all duration-200 group"
@@ -1322,7 +1386,7 @@ export default function SimuladorCortePage() {
                         </span>
                         <span className="text-success">{apv.toFixed(1)}% APROV.</span>
                       </div>
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -1338,7 +1402,9 @@ export default function SimuladorCortePage() {
                 <div className="flex flex-col gap-2 bg-card border border-border rounded-xl p-3">
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex gap-1 bg-background p-1 rounded-lg border border-border">
-                      <button
+                      <Button
+                        variant="plain"
+                        size="plain"
                         onClick={() => setModoExibicao('layout')}
                         className={`px-3 py-1.5 rounded text-sm font-bold transition-all ${
                           modoExibicao === 'layout'
@@ -1347,8 +1413,10 @@ export default function SimuladorCortePage() {
                         }`}
                       >
                         PREVIEW LAYOUT
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="plain"
+                        size="plain"
                         onClick={() => setModoExibicao('simulacao')}
                         className={`px-3 py-1.5 rounded text-sm font-bold transition-all ${
                           modoExibicao === 'simulacao'
@@ -1357,8 +1425,10 @@ export default function SimuladorCortePage() {
                         }`}
                       >
                         SIMULAÇÃO CNC
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="plain"
+                        size="plain"
                         onClick={() => setModoExibicao('verificacao')}
                         className={`px-3 py-1.5 rounded text-sm font-bold transition-all ${
                           modoExibicao === 'verificacao'
@@ -1367,77 +1437,95 @@ export default function SimuladorCortePage() {
                         }`}
                       >
                         VERIFICAÇÃO CAM
-                      </button>
+                      </Button>
                     </div>
 
                     <div className="flex items-center gap-3">
                       <span className="text-muted-foreground text-sm font-semibold truncate max-w-[200px]">
                         {planoAtivo.nome}
                       </span>
-                      <button
+                      <Button
+                        variant="plain"
+                        size="plain"
                         onClick={() => handleNavegarChapa(-1)}
                         className="p-1.5 hover:bg-muted rounded-lg text-muted-foreground hover:text-accent transition-all"
                       >
                         <ChevronLeft size={16} />
-                      </button>
+                      </Button>
                       <span className="text-foreground text-sm font-semibold min-w-[55px] text-center">
                         {indiceChapa + 1}/{layouts.length}
                       </span>
-                      <button
+                      <Button
+                        variant="plain"
+                        size="plain"
                         onClick={() => handleNavegarChapa(1)}
                         className="p-1.5 hover:bg-muted rounded-lg text-muted-foreground hover:text-accent transition-all"
                       >
                         <ChevronRight size={16} />
-                      </button>
+                      </Button>
                     </div>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/60 text-sm">
-                    <button
+                    <Button
+                      variant="plain"
+                      size="plain"
                       onClick={() => setMostrarGrade(!mostrarGrade)}
                       className={`px-2 py-1 rounded font-semibold ${mostrarGrade ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                     >
                       GRADE
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="plain"
+                      size="plain"
                       onClick={() => setMostrarCotas(!mostrarCotas)}
                       className={`px-2 py-1 rounded font-semibold ${mostrarCotas ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                     >
                       COTAS
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="plain"
+                      size="plain"
                       onClick={() => setMostrarRetalhos(!mostrarRetalhos)}
                       className={`px-2 py-1 rounded font-semibold ${mostrarRetalhos ? 'bg-success/15 text-success' : 'bg-muted/45 text-muted-foreground'}`}
                     >
                       SOBRAS
-                    </button>
+                    </Button>
 
                     <span className="text-muted-foreground font-bold">|</span>
 
-                    <button
+                    <Button
+                      variant="plain"
+                      size="plain"
                       onClick={() => setMostrarMaquina(!mostrarMaquina)}
                       className={`px-2 py-1 rounded font-semibold ${mostrarMaquina ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                     >
                       MÁQUINA
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="plain"
+                      size="plain"
                       onClick={() => setMostrarStock(!mostrarStock)}
                       className={`px-2 py-1 rounded font-semibold ${mostrarStock ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                     >
                       USINAGEM (STOCK)
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="plain"
+                      size="plain"
                       onClick={() => setMostrarClamps(!mostrarClamps)}
                       className={`px-2 py-1 rounded font-semibold ${mostrarClamps ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                     >
                       GARRAS
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="plain"
+                      size="plain"
                       onClick={() => setMostrarCaminho(!mostrarCaminho)}
                       className={`px-2 py-1 rounded font-semibold ${mostrarCaminho ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                     >
                       TOOLPATH
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -1484,28 +1572,36 @@ export default function SimuladorCortePage() {
               {/* PAINEL LATERAL DIREITO */}
               <div className="w-full lg:w-80 flex flex-col gap-4 shrink-0 lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto lg:sticky lg:top-4 custom-scrollbar">
                 <div className="flex gap-2">
-                  <button
+                  <Button
+                    variant="outline"
+                    size="plain"
                     onClick={handleExportRelatorio}
                     className="flex-1 flex items-center justify-center gap-1.5 bg-muted hover:bg-muted border border-border text-foreground text-sm font-bold py-2.5 rounded-lg transition-all"
                   >
                     <FileCheck size={14} className="text-accent" /> RELATÓRIO CNC
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="plain"
                     onClick={handleExportRelatorioSeguranca}
                     className="flex-1 flex items-center justify-center gap-1.5 bg-muted hover:bg-muted border border-border text-foreground text-sm font-bold py-2.5 rounded-lg transition-all"
                   >
                     <ShieldAlert size={14} className="text-destructive" /> SEGURANÇA
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="plain"
                     onClick={handleExportEtiquetas}
                     className="flex-1 flex items-center justify-center gap-1.5 bg-muted hover:bg-muted border border-border text-foreground text-sm font-bold py-2.5 rounded-lg transition-all"
                   >
                     <Box size={14} className="text-success" /> ETIQUETAS
-                  </button>
+                  </Button>
                 </div>
 
                 {/* TOGGLE CONFIGURAÇÃO CNC */}
-                <button
+                <Button
+                  variant="plain"
+                  size="plain"
                   onClick={() => setMostrarConfigCNC(!mostrarConfigCNC)}
                   className={`flex items-center justify-center gap-1.5 text-sm font-bold py-2 rounded-lg transition-all ${
                     mostrarConfigCNC
@@ -1515,7 +1611,7 @@ export default function SimuladorCortePage() {
                 >
                   <Settings size={14} />
                   {mostrarConfigCNC ? 'ESCONDER CONFIG CNC' : 'CONFIGURAÇÃO CNC'}
-                </button>
+                </Button>
 
                 {/* PAINEL DE CONFIGURAÇÃO CNC */}
                 {mostrarConfigCNC && (
@@ -1583,12 +1679,14 @@ export default function SimuladorCortePage() {
                 />
 
                 <div className="bg-card border border-border rounded-xl p-4">
-                  <button
+                  <Button
+                    variant="plain"
+                    size="plain"
                     onClick={() => setPlanoAtivo(null)}
                     className="w-full flex items-center justify-center gap-2 bg-muted hover:bg-muted text-foreground text-sm font-semibold py-2.5 rounded-lg transition-all"
                   >
                     <Upload size={14} /> TROCAR PLANO
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

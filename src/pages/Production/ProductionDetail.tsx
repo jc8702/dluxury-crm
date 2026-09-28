@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import QRCode from 'qrcode';
 import {
-  ArrowLeft,
   Hammer,
   Calendar,
   User,
@@ -23,7 +22,7 @@ import {
   FileText,
   Clock,
 } from 'lucide-react';
-import { Button, Card } from '../../components/ui';
+import { Button, Card, BackButton } from '../../components/ui';
 import { CardBody as CardContent } from '../../components/ui';
 import { Badge } from '../../components/common';
 import { api } from '../../lib/api';
@@ -418,22 +417,11 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
       <div style={{ padding: '32px', textAlign: 'center' }}>
         <AlertTriangle size={32} color={'#FFC107'} style={{ marginBottom: 8 }} />
         <p style={{ color: '#666666' }}>Ordem de produção não encontrada.</p>
-        <Button
+        <BackButton
+          label="Voltar"
+          className="mt-4"
           onClick={() => (onBack ? onBack() : navigate(-1))}
-          style={{
-            marginTop: '16px',
-            background: '#0D66CC',
-            color: '#FFFFFF',
-            border: 'none',
-            borderRadius: '8px',
-            padding: `8px 24px`,
-            fontSize: '14px',
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          <ArrowLeft size={14} /> Voltar
-        </Button>
+        />
       </div>
     );
   }
@@ -472,25 +460,12 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button
-            type="button"
-            onClick={() => (onBack ? onBack() : navigate(-1))}
+          <BackButton
+            label=""
             aria-label="Voltar"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 36,
-              height: 36,
-              borderRadius: '8px',
-              border: `1px solid #E0E0E0`,
-              background: '#FFFFFF',
-              color: '#666666',
-              cursor: 'pointer',
-            }}
-          >
-            <ArrowLeft size={16} />
-          </button>
+            style={{ marginBottom: 0 }}
+            onClick={() => (onBack ? onBack() : navigate(-1))}
+          />
           <div>
             <h1
               style={{
@@ -768,7 +743,9 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
                       borderRadius: '8px',
                     }}
                   >
-                    <button
+                    <Button
+                      variant="plain"
+                      size="plain"
                       type="button"
                       onClick={() => handleToggleStep(s.id, s.task)}
                       aria-pressed={s.completed}
@@ -788,7 +765,7 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
                       }}
                     >
                       {s.completed && <CheckCircle2 size={14} />}
-                    </button>
+                    </Button>
                     <div style={{ flex: 1 }}>
                       <div
                         style={{

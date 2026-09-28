@@ -84,7 +84,9 @@ export const ModalMaterial = ({ materiais, onAddEstoque, onAddManual, onClose }:
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {ESPESSURAS_PADRAO.map((e) => (
-                  <button
+                  <Button
+                    variant="plain"
+                    size="plain"
                     key={e}
                     type="button"
                     onClick={() => setManualEsp(e)}
@@ -95,7 +97,7 @@ export const ModalMaterial = ({ materiais, onAddEstoque, onAddManual, onClose }:
                     }`}
                   >
                     {e}mm
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -106,7 +108,9 @@ export const ModalMaterial = ({ materiais, onAddEstoque, onAddManual, onClose }:
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {TIPOS_PADRAO.map((t) => (
-                  <button
+                  <Button
+                    variant="plain"
+                    size="plain"
                     key={t}
                     type="button"
                     onClick={() => setManualTipo(t)}
@@ -117,7 +121,7 @@ export const ModalMaterial = ({ materiais, onAddEstoque, onAddManual, onClose }:
                     }`}
                   >
                     {t}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>

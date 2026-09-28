@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { X, CheckCircle, AlertTriangle, Info, AlertCircle } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { Button } from '../components/ui';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -110,9 +111,14 @@ const ToastItem = ({ toast, onClose }: { toast: ToastMessage; onClose: () => voi
           <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{toast.message}</p>
         )}
       </div>
-      <button onClick={onClose} className="shrink-0 text-muted-foreground hover:text-foreground">
+      <Button
+        variant="plain"
+        size="plain"
+        onClick={onClose}
+        className="shrink-0 text-muted-foreground hover:text-foreground"
+      >
         <X className="w-4 h-4" />
-      </button>
+      </Button>
     </div>
   );
 };

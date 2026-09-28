@@ -11,6 +11,8 @@ import {
   ExternalLink,
   HelpCircle,
 } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
+import { Button } from '../ui';
 
 interface PopoverEventoProps {
   evento: EventoCalendarioType;
@@ -19,6 +21,7 @@ interface PopoverEventoProps {
 }
 
 export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEventoProps) {
+  const { error: toastError, warning: toastWarning } = useToast();
   const [loading, setLoading] = useState(false);
 
   const obterNomeTipo = (tipo: string) => {
@@ -44,7 +47,8 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
       // Como os IDs manuais são prefixados com 'manual-', extraímos o número
       const isManual = evento.id.startsWith('manual-');
       if (!isManual) {
-        alert(
+        toastWarning(
+          'Ação não permitida',
           'Este é um evento gerado automaticamente pelo sistema (OP/Orçamento) e não pode ser concluído diretamente por aqui.',
         );
         setLoading(false);
@@ -56,7 +60,7 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
       onClose();
     } catch (err: any) {
       console.error('Erro ao atualizar evento:', err);
-      alert(err.message || 'Erro ao atualizar evento.');
+      toastError('Erro ao atualizar evento', err.message || 'Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -68,7 +72,10 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
     try {
       const isManual = evento.id.startsWith('manual-');
       if (!isManual) {
-        alert('Eventos de sistema (prazos de OP/Orçamento) não podem ser excluídos manualmente.');
+        toastWarning(
+          'Ação não permitida',
+          'Eventos de sistema (prazos de OP/Orçamento) não podem ser excluídos manualmente.',
+        );
         setLoading(false);
         return;
       }
@@ -78,7 +85,7 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
       onClose();
     } catch (err: any) {
       console.error('Erro ao deletar evento:', err);
-      alert(err.message || 'Erro ao remover evento.');
+      toastError('Erro ao remover evento', err.message || 'Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -122,12 +129,14 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
             </div>
             <h3 className="text-lg font-bold text-foreground leading-snug">{evento.titulo}</h3>
           </div>
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             onClick={onClose}
             className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded-full transition-all"
           >
             <X className="w-5 h-5" />
-          </button>
+          </Button>
         </div>
 
         {/* Content */}
@@ -204,7 +213,9 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
         <div className="flex items-center justify-between p-6 border-t border-border bg-muted/15">
           <div>
             {isManual && (
-              <button
+              <Button
+                variant="danger"
+                size="plain"
                 onClick={deletarEvento}
                 disabled={loading}
                 className="flex items-center gap-1 px-3 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10 rounded-lg transition-all"
@@ -212,20 +223,24 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
               >
                 <Trash2 className="w-4 h-4" />
                 Excluir
-              </button>
+              </Button>
             )}
           </div>
 
           <div className="flex items-center gap-2">
-            <button
+            <Button
+              variant="outline"
+              size="plain"
               onClick={onClose}
               className="px-4 py-2 border border-border bg-background hover:bg-muted text-xs font-semibold rounded-lg text-foreground transition-all"
             >
               Fechar
-            </button>
+            </Button>
 
             {isManual && (
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 onClick={alternarConclusao}
                 disabled={loading}
                 className={`
@@ -235,7 +250,7 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
               >
                 <CheckCircle className="w-4 h-4" />
                 {evento.concluido ? 'Reabrir' : 'Concluir'}
-              </button>
+              </Button>
             )}
           </div>
         </div>

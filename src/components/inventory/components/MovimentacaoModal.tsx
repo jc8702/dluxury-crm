@@ -4,8 +4,9 @@ import { useCrmStore as useCRM } from '../../../stores/useCrmStore';
 import type { Material } from '../../../types/entities';
 import { ArrowUpCircle, ArrowDownCircle, Settings2 } from 'lucide-react';
 import { Modal } from '../../../components/common';
-import { Button, Input } from '../../../components/ui';
+import { Button, Input, FormActions } from '../../../components/ui';
 import { api } from '../../../lib/api';
+import { Select } from '../../ui';
 
 interface MovimentacaoModalProps {
   material: Material;
@@ -127,7 +128,9 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
             { id: 'saida', label: 'Saída', icon: <ArrowDownCircle size={18} />, color: '#DC3545' },
             { id: 'ajuste', label: 'Ajuste', icon: <Settings2 size={18} />, color: '#0D66CC' },
           ].map((t) => (
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               key={t.id}
               type="button"
               onClick={() => setTipo(t.id as any)}
@@ -139,7 +142,7 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
               }}
             >
               {t.icon} {t.label}
-            </button>
+            </Button>
           ))}
         </div>
 
@@ -189,7 +192,7 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
                   <span className="text-xs text-muted-foreground">(carregando...)</span>
                 )}
               </label>
-              <select
+              <Select
                 className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
                 value={selecaoNF}
                 onChange={(e) => {
@@ -208,7 +211,7 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
                   </option>
                 ))}
                 <option value="manual">+ Digitar Manualmente...</option>
-              </select>
+              </Select>
             </div>
             {(selecaoNF === 'manual' || notasFiscaisUnicas.length === 0) && (
               <div className="animate-fade-in">
@@ -229,7 +232,7 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
               <label className="block text-sm font-medium text-foreground/90 mb-2">
                 Projeto (Opcional)
               </label>
-              <select
+              <Select
                 className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
                 value={projetoId}
                 onChange={(e) => setProjetoId(e.target.value)}
@@ -240,13 +243,13 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
                     {p.clientName} - {p.ambiente}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground/90 mb-2">
                 Orçamento (Opcional)
               </label>
-              <select
+              <Select
                 className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
                 value={orcamentoId}
                 onChange={(e) => setOrcamentoId(e.target.value)}
@@ -257,7 +260,7 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
                     {o.numero}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
           </div>
         )}
@@ -281,19 +284,12 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
 
         {error && <p className="text-destructive text-sm text-center font-semibold">{error}</p>}
 
-        <div className="flex gap-4 mt-2">
-          <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            isLoading={loading}
-            disabled={tipo === 'saida' && novoEstoque < 0}
-            className="flex-1"
-          >
-            Confirmar
-          </Button>
-        </div>
+        <FormActions
+          onCancel={onClose}
+          loading={loading}
+          disabled={tipo === 'saida' && novoEstoque < 0}
+          submitLabel="Confirmar"
+        />
       </form>
     </Modal>
   );

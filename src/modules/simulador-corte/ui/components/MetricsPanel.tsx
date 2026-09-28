@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type { SimulationProgram, SimulationMetrics, SimulationIssue } from '../../domain/types';
 import type { IssueWithRecommendation } from '../../domain/types';
+import { Button } from '../../../../components/ui';
 
 interface MetricsPanelProps {
   program: SimulationProgram;
@@ -203,7 +204,9 @@ export default function MetricsPanel({
                     {issue.descricao}
                   </p>
                   <div className="flex gap-1.5 mt-1">
-                    <button
+                    <Button
+                      variant="plain"
+                      size="plain"
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -213,9 +216,11 @@ export default function MetricsPanel({
                       title="PULAR PARA O ERRO NO CÓDIGO/CENA 3D"
                     >
                       <Crosshair size={10} /> JUMP
-                    </button>
+                    </Button>
                     {matchingIwr && onApplyRecommendation && (
-                      <button
+                      <Button
+                        variant="plain"
+                        size="plain"
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -225,7 +230,7 @@ export default function MetricsPanel({
                         title="CORRIGIR E FAZER O ERRO DESAPARECER"
                       >
                         <CheckCircle size={10} /> CORRIGIR
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>

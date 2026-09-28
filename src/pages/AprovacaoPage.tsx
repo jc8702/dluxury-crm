@@ -15,6 +15,8 @@ import { api } from '../lib/api';
 import { useToast } from '../context/ToastContext';
 import { exportBudgetToPDF } from '../modules/quotations/services/export-pdf';
 
+import { Input } from '../components/ui';
+import { Button } from '../components/ui';
 interface AprovacaoPageProps {
   token: string;
 }
@@ -83,13 +85,17 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
     }
   };
 
+  const [rejecting, setRejecting] = useState(false);
   const handleReject = async () => {
     if (!formReason) return toastError('Por favor, informe o motivo da revisão.');
+    setRejecting(true);
     try {
       await api.aprovacao.recusar(token, { motivo: formReason });
       setSuccess('rejected');
     } catch (err: any) {
       toastError(err.message);
+    } finally {
+      setRejecting(false);
     }
   };
 
@@ -128,13 +134,15 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
           <p style={{ color: 'hsl(var(--primary-foreground) / 0.7)', lineHeight: '1.6' }}>
             {error}
           </p>
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             onClick={() => window.location.reload()}
             className="btn-secondary"
             style={{ marginTop: '2rem' }}
           >
             Tentar Novamente
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -330,7 +338,9 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                 <Clock size={16} /> Emitido em{' '}
                 {new Date(quotation.created_at || quotation.criado_em).toLocaleDateString('pt-BR')}
               </p>
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 onClick={handleDownloadPDF}
                 className="btn-secondary"
                 style={{
@@ -345,7 +355,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
               >
                 <FileDown size={16} />
                 Baixar PDF da Proposta
-              </button>
+              </Button>
             </div>
             <div style={{ textAlign: 'right' }}>
               <p style={{ margin: 0, fontWeight: '700', fontSize: '1.1rem' }}>
@@ -647,7 +657,9 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
 
               {action === 'idle' && (
                 <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-                  <button
+                  <Button
+                    variant="plain"
+                    size="plain"
                     onClick={() => setAction('approving')}
                     className="btn-primary"
                     style={{
@@ -658,14 +670,16 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                     }}
                   >
                     APROVAR AGORA
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="plain"
+                    size="plain"
                     onClick={() => setAction('rejecting')}
                     className="btn-secondary"
                     style={{ padding: '1rem 2rem', fontSize: '1rem', borderRadius: '30px' }}
                   >
                     Solicitar Revisão
-                  </button>
+                  </Button>
                 </div>
               )}
 
@@ -683,7 +697,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                   <h4 style={{ margin: '0 0 1.5rem' }}>Assinatura Digital</h4>
                   <div className="form-group" style={{ textAlign: 'left' }}>
                     <label>Seu Nome Completo</label>
-                    <input
+                    <Input
                       type="text"
                       placeholder="Digite seu nome aqui"
                       value={formName}
@@ -692,16 +706,23 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                     />
                   </div>
                   <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                    <button
+                    <Button
+                      variant="plain"
+                      size="plain"
                       onClick={handleApprove}
                       className="btn-primary"
                       style={{ flex: 1, height: '50px' }}
                     >
                       CONCORDAR E APROVAR
-                    </button>
-                    <button onClick={() => setAction('idle')} className="btn-secondary">
+                    </Button>
+                    <Button
+                      variant="plain"
+                      size="plain"
+                      onClick={() => setAction('idle')}
+                      className="btn-secondary"
+                    >
                       Voltar
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
@@ -728,16 +749,24 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                     />
                   </div>
                   <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                    <button
+                    <Button
+                      variant="plain"
+                      size="plain"
                       onClick={handleReject}
+                      isLoading={rejecting}
                       className="btn-primary"
                       style={{ flex: 1, background: 'hsl(var(--destructive))', height: '50px' }}
                     >
                       ENVIAR SOLICITAÇÃO
-                    </button>
-                    <button onClick={() => setAction('idle')} className="btn-secondary">
+                    </Button>
+                    <Button
+                      variant="plain"
+                      size="plain"
+                      onClick={() => setAction('idle')}
+                      className="btn-secondary"
+                    >
                       Voltar
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}

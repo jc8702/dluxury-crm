@@ -263,7 +263,7 @@ const handleKanbanProducaoCore: TenantHandler = async (req, res) => {
       return res.status(200).json({ success: true, data: historico });
     }
 
-    return res.status(405).json({ success: false, error: 'M�todo n�o permitido' });
+    return res.status(405).json({ success: false, error: 'Método não permitido' });
   } catch (err: any) {
     logger.error('[KANBAN_PRODUCAO_ERROR]', err);
     return res.status(500).json({ success: false, error: err.message });

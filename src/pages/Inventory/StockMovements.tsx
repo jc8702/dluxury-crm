@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  ArrowLeft,
   Search,
   ChevronUp,
   ChevronDown,
@@ -30,11 +29,13 @@ import {
   LineChart,
   Line,
 } from 'recharts';
-import { Button, Card } from '../../components/ui';
+import { Button, Card, BackButton } from '../../components/ui';
 import { CardBody as CardContent } from '../../components/ui';
 import { useInventoryStore as useInventory } from '../../stores/useInventoryStore';
 import { useToast } from '../../context/ToastContext';
+import { Select } from '../../components/ui';
 
+import { Input } from '../../components/ui';
 type MovementType = 'entrada' | 'saida' | 'ajuste';
 
 const TYPE_META: Record<
@@ -387,25 +388,12 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button
-            type="button"
-            onClick={() => (onBack ? onBack() : navigate(-1))}
+          <BackButton
+            label=""
             aria-label="Voltar"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 36,
-              height: 36,
-              borderRadius: '8px',
-              border: `1px solid hsl(var(--border))`,
-              background: 'hsl(var(--card))',
-              color: 'hsl(var(--muted-foreground))',
-              cursor: 'pointer',
-            }}
-          >
-            <ArrowLeft size={16} />
-          </button>
+            style={{ marginBottom: 0 }}
+            onClick={() => (onBack ? onBack() : navigate(-1))}
+          />
           <div>
             <h1
               style={{
@@ -773,7 +761,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                 pointerEvents: 'none',
               }}
             />
-            <input
+            <Input
               type="text"
               placeholder="Buscar por material, SKU ou motivo…"
               value={search}
@@ -786,7 +774,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
             />
           </div>
 
-          <select
+          <Select
             value={typeFilter}
             onChange={(e) => {
               setTypeFilter(e.target.value as any);
@@ -799,9 +787,9 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
             <option value="entrada">Entrada</option>
             <option value="saida">Saída</option>
             <option value="ajuste">Ajuste</option>
-          </select>
+          </Select>
 
-          <select
+          <Select
             value={userFilter}
             onChange={(e) => {
               setUserFilter(e.target.value);
@@ -816,11 +804,11 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                 {u}
               </option>
             ))}
-          </select>
+          </Select>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <Calendar size={14} color={'hsl(var(--muted-foreground))'} />
-            <input
+            <Input
               type="date"
               value={dateFrom}
               onChange={(e) => {
@@ -838,7 +826,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
             >
               até
             </span>
-            <input
+            <Input
               type="date"
               value={dateTo}
               onChange={(e) => {
@@ -851,7 +839,9 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
           </div>
 
           {hasActiveFilter && (
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               type="button"
               onClick={clearFilters}
               style={{
@@ -871,7 +861,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
               }}
             >
               <X size={12} /> Limpar filtros
-            </button>
+            </Button>
           )}
         </div>
 

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Check, AlertCircle, Search, HelpCircle, ArrowRight } from 'lucide-react';
 
+import { Input } from '../../../components/ui';
+import { Button } from '../../../components/ui';
 export interface SugestaoMatch {
   sku_interno: string;
   nome: string;
@@ -21,7 +23,9 @@ export interface ItemMatching {
 
 interface Props {
   resultados: ItemMatching[];
-  onConfirmar: (itensValidados: Array<{ sku_promob: string; sku_interno: string; quantidade: number }>) => void;
+  onConfirmar: (
+    itensValidados: Array<{ sku_promob: string; sku_interno: string; quantidade: number }>,
+  ) => void;
   onCancelar: () => void;
 }
 
@@ -46,17 +50,17 @@ export default function SKUMatchingUI({ resultados, onConfirmar, onCancelar }: P
   const [searchResults, setSearchResults] = useState<Record<string, SugestaoMatch[]>>({});
 
   const handleSelecionar = (skuProcurado: string, skuInterno: string) => {
-    setSelecionados(prev => ({ ...prev, [skuProcurado]: skuInterno }));
+    setSelecionados((prev) => ({ ...prev, [skuProcurado]: skuInterno }));
   };
 
   const toggleExpandir = (skuProcurado: string) => {
-    setExpandido(prev => ({ ...prev, [skuProcurado]: !prev[skuProcurado] }));
+    setExpandido((prev) => ({ ...prev, [skuProcurado]: !prev[skuProcurado] }));
   };
 
   const handleBuscarEstoque = async (skuProcurado: string, query: string) => {
-    setFiltroOverride(prev => ({ ...prev, [skuProcurado]: query }));
+    setFiltroOverride((prev) => ({ ...prev, [skuProcurado]: query }));
     if (query.length < 2) {
-      setSearchResults(prev => ({ ...prev, [skuProcurado]: [] }));
+      setSearchResults((prev) => ({ ...prev, [skuProcurado]: [] }));
       return;
     }
 
@@ -70,9 +74,9 @@ export default function SKUMatchingUI({ resultados, onConfirmar, onCancelar }: P
           confianca: 60,
           tipo_match: 'descricao' as const,
           quantidade_disponivel: Number(i.quantidade_disponivel || 0),
-          preco_custo: Number(i.preco_custo_unitario || 0)
+          preco_custo: Number(i.preco_custo_unitario || 0),
         }));
-        setSearchResults(prev => ({ ...prev, [skuProcurado]: formatados }));
+        setSearchResults((prev) => ({ ...prev, [skuProcurado]: formatados }));
       }
     } catch (e) {
       console.error('Erro ao buscar SKU alternativo:', e);
@@ -80,17 +84,19 @@ export default function SKUMatchingUI({ resultados, onConfirmar, onCancelar }: P
   };
 
   const handleFinalizar = () => {
-    const final = resultados.map(r => ({
+    const final = resultados.map((r) => ({
       sku_promob: r.sku_procurado,
       sku_interno: selecionados[r.sku_procurado] || '',
-      quantidade: r.quantidade
+      quantidade: r.quantidade,
     }));
     onConfirmar(final);
   };
 
   const totalItens = resultados.length;
-  const resolvidos = resultados.filter(r => selecionados[r.sku_procurado] !== '').length;
-  const pendentesValidacao = resultados.filter(r => r.requer_validacao_manual && !selecionados[r.sku_procurado]).length;
+  const resolvidos = resultados.filter((r) => selecionados[r.sku_procurado] !== '').length;
+  const pendentesValidacao = resultados.filter(
+    (r) => r.requer_validacao_manual && !selecionados[r.sku_procurado],
+  ).length;
 
   return (
     <div className="bg-card border border-border rounded-xl p-6 w-full max-w-4xl max-h-[85vh] overflow-y-auto">
@@ -102,17 +108,22 @@ export default function SKUMatchingUI({ resultados, onConfirmar, onCancelar }: P
             Mapeador SKU (PROMOB ↔ Estoque)
           </h2>
           <p className="text-muted-foreground text-sm mt-1">
-            Mapeamento inteligente para sincronizar sua engenharia de projeto com o estoque detalhado.
+            Mapeamento inteligente para sincronizar sua engenharia de projeto com o estoque
+            detalhado.
           </p>
         </div>
 
         <div className="mt-3 md:mt-0 flex items-center gap-4 text-sm text-foreground">
           <div className="bg-muted px-3 py-1.5 rounded-lg border border-border">
-            <span>Resolvidos: <strong>{resolvidos}</strong> de {totalItens}</span>
+            <span>
+              Resolvidos: <strong>{resolvidos}</strong> de {totalItens}
+            </span>
           </div>
           {pendentesValidacao > 0 && (
             <div className="bg-orange-500/10 border border-orange-500/20 text-orange-500 px-3 py-1.5 rounded-lg">
-              <span>Pendentes: <strong>{pendentesValidacao}</strong></span>
+              <span>
+                Pendentes: <strong>{pendentesValidacao}</strong>
+              </span>
             </div>
           )}
         </div>
@@ -127,18 +138,18 @@ export default function SKUMatchingUI({ resultados, onConfirmar, onCancelar }: P
           const searchList = searchResults[item.sku_procurado] || [];
 
           return (
-            <div 
-              key={item.sku_procurado} 
+            <div
+              key={item.sku_procurado}
               className={`border rounded-xl transition ${
                 item.requer_validacao_manual
-                  ? skuSel 
-                    ? 'bg-muted/30 border-primary/30' 
+                  ? skuSel
+                    ? 'bg-muted/30 border-primary/30'
                     : 'bg-orange-500/5 border-orange-500/30'
                   : 'bg-muted/20 border-border/80'
               }`}
             >
               {/* Header do Item */}
-              <div 
+              <div
                 onClick={() => toggleExpandir(item.sku_procurado)}
                 className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 rounded-t-xl"
               >
@@ -175,9 +186,7 @@ export default function SKUMatchingUI({ resultados, onConfirmar, onCancelar }: P
                       Requer Seleção
                     </span>
                   )}
-                  <span className="text-muted-foreground text-sm">
-                    {isExpandido ? '▲' : '▼'}
-                  </span>
+                  <span className="text-muted-foreground text-sm">{isExpandido ? '▲' : '▼'}</span>
                 </div>
               </div>
 
@@ -193,7 +202,9 @@ export default function SKUMatchingUI({ resultados, onConfirmar, onCancelar }: P
                     {item.skus_encontrados.map((sug) => {
                       const isAtivo = skuSel === sug.sku_interno;
                       return (
-                        <button
+                        <Button
+                          variant="plain"
+                          size="plain"
                           key={sug.sku_interno}
                           type="button"
                           onClick={() => handleSelecionar(item.sku_procurado, sug.sku_interno)}
@@ -204,25 +215,34 @@ export default function SKUMatchingUI({ resultados, onConfirmar, onCancelar }: P
                           }`}
                         >
                           <div>
-                            <span className="font-mono text-sm font-bold block">{sug.sku_interno}</span>
-                            <span className="text-muted-foreground text-sm block mt-0.5">{sug.nome}</span>
+                            <span className="font-mono text-sm font-bold block">
+                              {sug.sku_interno}
+                            </span>
+                            <span className="text-muted-foreground text-sm block mt-0.5">
+                              {sug.nome}
+                            </span>
                             <span className="text-muted-foreground/80 text-sm block mt-2">
-                              Estoque disponível: <strong className="text-muted-foreground">{sug.quantidade_disponivel}</strong>
+                              Estoque disponível:{' '}
+                              <strong className="text-muted-foreground">
+                                {sug.quantidade_disponivel}
+                              </strong>
                             </span>
                           </div>
 
                           <div className="text-right">
-                            <span className={`px-2 py-0.5 rounded text-sm font-bold ${
-                              sug.tipo_match === 'exato'
-                                ? 'bg-success/10 text-success border border-success/20'
-                                : sug.tipo_match === 'fuzzy'
-                                ? 'bg-primary/10 text-primary border border-primary/20'
-                                : 'bg-muted text-muted-foreground'
-                            }`}>
+                            <span
+                              className={`px-2 py-0.5 rounded text-sm font-bold ${
+                                sug.tipo_match === 'exato'
+                                  ? 'bg-success/10 text-success border border-success/20'
+                                  : sug.tipo_match === 'fuzzy'
+                                    ? 'bg-primary/10 text-primary border border-primary/20'
+                                    : 'bg-muted text-muted-foreground'
+                              }`}
+                            >
                               {sug.confianca}% Match
                             </span>
                           </div>
-                        </button>
+                        </Button>
                       );
                     })}
 
@@ -239,7 +259,7 @@ export default function SKUMatchingUI({ resultados, onConfirmar, onCancelar }: P
                       Busca manual de item no estoque:
                     </label>
                     <div className="flex gap-2">
-                      <input
+                      <Input
                         type="text"
                         placeholder="Digite o SKU ou palavra-chave..."
                         value={query}
@@ -250,19 +270,26 @@ export default function SKUMatchingUI({ resultados, onConfirmar, onCancelar }: P
 
                     {searchList.length > 0 && (
                       <div className="mt-2 bg-background border border-border rounded-lg p-2 divide-y divide-border max-h-32 overflow-y-auto">
-                        {searchList.map(s => (
-                          <button
+                        {searchList.map((s) => (
+                          <Button
+                            variant="plain"
+                            size="plain"
                             key={s.sku_interno}
                             type="button"
                             onClick={() => {
                               handleSelecionar(item.sku_procurado, s.sku_interno);
-                              setSearchResults(prev => ({ ...prev, [item.sku_procurado]: [] }));
+                              setSearchResults((prev) => ({ ...prev, [item.sku_procurado]: [] }));
                             }}
                             className="w-full text-left p-1.5 hover:bg-muted text-sm text-muted-foreground hover:text-foreground flex justify-between"
                           >
-                            <span><strong className="font-mono text-muted-foreground">{s.sku_interno}</strong> - {s.nome}</span>
+                            <span>
+                              <strong className="font-mono text-muted-foreground">
+                                {s.sku_interno}
+                              </strong>{' '}
+                              - {s.nome}
+                            </span>
                             <span className="text-success">{s.quantidade_disponivel} disp.</span>
-                          </button>
+                          </Button>
                         ))}
                       </div>
                     )}
@@ -276,15 +303,19 @@ export default function SKUMatchingUI({ resultados, onConfirmar, onCancelar }: P
 
       {/* Ações Finais */}
       <div className="flex gap-3 justify-end border-t border-border pt-6">
-        <button
+        <Button
+          variant="outline"
+          size="plain"
           type="button"
           onClick={onCancelar}
           className="px-5 py-2.5 bg-muted border border-border hover:bg-muted/80 text-muted-foreground font-semibold rounded-lg transition"
         >
           Descartar Importação
-        </button>
+        </Button>
 
-        <button
+        <Button
+          variant="plain"
+          size="plain"
           type="button"
           onClick={handleFinalizar}
           disabled={pendentesValidacao > 0}
@@ -292,7 +323,7 @@ export default function SKUMatchingUI({ resultados, onConfirmar, onCancelar }: P
         >
           Confirmar Mapeamento
           <ArrowRight size={18} />
-        </button>
+        </Button>
       </div>
     </div>
   );

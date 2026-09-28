@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useEscClose } from '../../../hooks/useEscClose';
 import { useInventoryStore as useInventory } from '../../../stores/useInventoryStore';
 import type { Fornecedor } from '../../../types/entities';
-import { X, Save } from 'lucide-react';
 import { Modal } from '../../../components/common';
-import { Button, Input } from '../../../components/ui';
+import { Input, FormActions } from '../../../components/ui';
 
 interface FornecedorFormModalProps {
   fornecedor?: Fornecedor | null;
@@ -133,19 +132,7 @@ const FornecedorFormModal: React.FC<FornecedorFormModalProps> = ({
 
         {error && <p className="text-destructive text-sm text-center">{error}</p>}
 
-        <div className="flex gap-4 mt-4">
-          <Button type="button" onClick={onClose} variant="outline" className="flex-1">
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            disabled={loading}
-            variant="primary"
-            className="flex-[2] flex items-center justify-center gap-2"
-          >
-            <Save size={18} /> {loading ? 'Salvando...' : 'Salvar Fornecedor'}
-          </Button>
-        </div>
+        <FormActions onCancel={onClose} loading={loading} submitLabel="Salvar Fornecedor" />
       </form>
     </Modal>
   );

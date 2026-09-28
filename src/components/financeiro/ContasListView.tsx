@@ -4,7 +4,6 @@ import {
   Repeat,
   Lock,
   Plus,
-  ArrowLeft,
   Wallet,
   Building2,
   Edit2,
@@ -21,6 +20,8 @@ import {
 import type { ContaInterna } from '../../modules/financeiro/domain/types';
 import type { FormTransferencia } from '../../modules/financeiro/domain/types';
 import type { Fechamento } from '../../modules/financeiro/domain/types';
+import { Select } from '../ui';
+import { BackButton } from '../ui';
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -77,13 +78,10 @@ export function ContasListView({
 }: Props) {
   return (
     <>
-      <Button
-        variant="ghost"
+      <BackButton
+        label="Voltar ao Painel Financeiro"
         onClick={() => (window.location.hash = '#/financeiro')}
-        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 p-0 h-auto hover:bg-transparent"
-      >
-        <ArrowLeft size={16} /> Voltar ao Painel Financeiro
-      </Button>
+      />
 
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
         <div>
@@ -274,7 +272,7 @@ export function ContasListView({
               <label className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic text-center">
                 CONTA ORIGEM
               </label>
-              <select
+              <Select
                 className="w-full bg-background border border-border rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all appearance-none font-bold text-center h-20"
                 value={transferForm.conta_origem_id}
                 onChange={(e) =>
@@ -287,13 +285,13 @@ export function ContasListView({
                     {c.nome.toUpperCase()}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
               <label className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic text-center">
                 CONTA DESTINO
               </label>
-              <select
+              <Select
                 className="w-full bg-background border border-border rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all appearance-none font-bold text-center h-20"
                 value={transferForm.conta_destino_id}
                 onChange={(e) =>
@@ -308,7 +306,7 @@ export function ContasListView({
                       {c.nome.toUpperCase()}
                     </option>
                   ))}
-              </select>
+              </Select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-6">
@@ -397,7 +395,7 @@ export function ContasListView({
               <label className="text-xs font-black text-muted-foreground mb-1 block tracking-[0.3em] italic ml-2">
                 MÊS DE REFERÊNCIA
               </label>
-              <select
+              <Select
                 className="w-full bg-background border border-border rounded-2xl px-5 py-4 appearance-none font-black italic uppercase text-sm"
                 value={fechamentoForm.mes}
                 onChange={(e) =>
@@ -409,13 +407,13 @@ export function ContasListView({
                     {new Date(2000, i).toLocaleString('pt-BR', { month: 'long' }).toUpperCase()}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className="space-y-2">
               <label className="text-xs font-black text-muted-foreground mb-1 block tracking-[0.3em] italic ml-2">
                 ANO BASE
               </label>
-              <select
+              <Select
                 className="w-full bg-background border border-border rounded-2xl px-5 py-4 appearance-none font-black text-sm"
                 value={fechamentoForm.ano}
                 onChange={(e) =>
@@ -427,7 +425,7 @@ export function ContasListView({
                     {a}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <Button
               variant="primary"
@@ -481,12 +479,14 @@ export function ContasListView({
                           </span>
                         </td>
                         <td className="px-8 py-5 text-right">
-                          <button
+                          <Button
+                            variant="plain"
+                            size="plain"
                             className="text-xs font-black text-primary hover:text-foreground uppercase tracking-widest italic underline decoration-primary/30 underline-offset-4"
                             onClick={() => onReabrirFechamento?.(f)}
                           >
                             REABRIR CICLO
-                          </button>
+                          </Button>
                         </td>
                       </tr>
                     ))

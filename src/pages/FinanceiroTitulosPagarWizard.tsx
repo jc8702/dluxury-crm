@@ -5,6 +5,7 @@ import { useToast } from '../context/ToastContext';
 import { CardSkeleton } from '../components/common/Skeleton';
 import { Button } from '../components/ui';
 import { Input } from '../components/common';
+import { Select } from '../components/ui';
 
 // Meios que exigem campo de taxa financeira
 const MEIOS_COM_TAXA = ['boleto', 'cartao_credito', 'cheque', 'cartao_debito'];
@@ -187,7 +188,7 @@ export default function FinanceiroTitulosPagarWizard({
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         <div>
           <label className="label-base">Fornecedor / Favorecido</label>
-          <select
+          <Select
             className="input-base"
             value={formData.fornecedor_id}
             onChange={(e) => setFormData({ ...formData, fornecedor_id: e.target.value })}
@@ -198,7 +199,7 @@ export default function FinanceiroTitulosPagarWizard({
                 {s.nome || s.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
 
         {formData.fornecedor_id && (
@@ -244,7 +245,7 @@ export default function FinanceiroTitulosPagarWizard({
                     <Loader className="animate-spin" /> Carregando OCs...
                   </div>
                 ) : pedidos.length > 0 ? (
-                  <select
+                  <Select
                     className="input-base"
                     value={formData.pedido_compra_id}
                     onChange={(e) => handleOCSelection(e.target.value)}
@@ -258,7 +259,7 @@ export default function FinanceiroTitulosPagarWizard({
                         })}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 ) : (
                   <p
                     style={{
@@ -277,7 +278,7 @@ export default function FinanceiroTitulosPagarWizard({
 
         <div>
           <label className="label-base">Classe Financeira</label>
-          <select
+          <Select
             className="input-base"
             value={formData.classe_financeira_id}
             onChange={(e) => setFormData({ ...formData, classe_financeira_id: e.target.value })}
@@ -290,7 +291,7 @@ export default function FinanceiroTitulosPagarWizard({
                   {c.codigo} - {c.nome}
                 </option>
               ))}
-          </select>
+          </Select>
         </div>
 
         <div className="space-y-2">
@@ -327,7 +328,7 @@ export default function FinanceiroTitulosPagarWizard({
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div>
             <label className="label-base">Contas Internas</label>
-            <select
+            <Select
               className="input-base"
               value={formData.conta_bancaria_id}
               onChange={(e) => setFormData({ ...formData, conta_bancaria_id: e.target.value })}
@@ -338,11 +339,11 @@ export default function FinanceiroTitulosPagarWizard({
                   {c.nome}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div>
             <label className="label-base">Meio de Pagamento</label>
-            <select
+            <Select
               className="input-base"
               value={formData.forma_pagamento_id}
               onChange={(e) => {
@@ -356,7 +357,7 @@ export default function FinanceiroTitulosPagarWizard({
                   {f.nome}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         </div>
 
@@ -536,7 +537,7 @@ export default function FinanceiroTitulosPagarWizard({
               >
                 <div>
                   <label style={{ fontSize: '0.7rem', opacity: 0.6 }}>Projeto</label>
-                  <select
+                  <Select
                     className="input-base"
                     style={{ height: '36px', fontSize: '0.8rem' }}
                     value={r.projeto_id}
@@ -552,11 +553,11 @@ export default function FinanceiroTitulosPagarWizard({
                         {p.nome || p.name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
                 <div>
                   <label style={{ fontSize: '0.7rem', opacity: 0.6 }}>Classe</label>
-                  <select
+                  <Select
                     className="input-base"
                     style={{ height: '36px', fontSize: '0.8rem' }}
                     value={r.classe_id}
@@ -572,7 +573,7 @@ export default function FinanceiroTitulosPagarWizard({
                         {c.nome}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Input

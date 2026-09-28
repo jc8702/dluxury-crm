@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Shield, Eye, Mail } from 'lucide-react';
+import { Button } from '../components/ui';
 
 const PoliticaPrivacidadePage: React.FC = () => {
   const navigate = useNavigate();
@@ -18,7 +19,9 @@ const PoliticaPrivacidadePage: React.FC = () => {
     >
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
         {/* Botão Voltar */}
-        <button
+        <Button
+          variant="plain"
+          size="plain"
           onClick={() => navigate('/')}
           style={{
             background: 'transparent',
@@ -38,7 +41,7 @@ const PoliticaPrivacidadePage: React.FC = () => {
         >
           <ArrowLeft size={18} />
           Voltar para Home
-        </button>
+        </Button>
 
         {/* Cabeçalho */}
         <div

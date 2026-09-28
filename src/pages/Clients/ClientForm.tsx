@@ -2,8 +2,8 @@ import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Save, X, Check } from 'lucide-react';
-import { Button, Input, Select, Textarea } from '../../components/ui';
+import { Check } from 'lucide-react';
+import { Button, Input, Select, Textarea, FormActions } from '../../components/ui';
 import { clientSchema, type ClientFormData } from '../../validators';
 import type { Client } from '../../types/entities';
 
@@ -205,7 +205,9 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
           {comodos.map((c) => {
             const isSelected = watchComodos.includes(c);
             return (
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 key={c}
                 type="button"
                 onClick={() => toggleComodo(c)}
@@ -217,7 +219,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
               >
                 {isSelected && <Check size={12} />}
                 {c}
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -268,20 +270,14 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
       </div>
 
       {/* Ações */}
-      <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-[var(--ui-border)]">
-        <Button type="button" onClick={onCancel} variant="outline" className="gap-2">
-          <X size={16} />
-          Cancelar
-        </Button>
-        <Button
-          type="submit"
-          disabled={isSubmitting || !isDirty}
-          className="gap-2 shadow-[var(--ui-shadow-primary)]"
-        >
-          <Save size={16} />
-          {isSubmitting ? 'Salvando...' : initialData ? 'Salvar Alterações' : 'Cadastrar Cliente'}
-        </Button>
-      </div>
+      <FormActions
+        onCancel={onCancel}
+        loading={isSubmitting}
+        disabled={!isDirty}
+        submitLabel={
+          isSubmitting ? 'Salvando...' : initialData ? 'Salvar Alterações' : 'Cadastrar Cliente'
+        }
+      />
     </form>
   );
 };

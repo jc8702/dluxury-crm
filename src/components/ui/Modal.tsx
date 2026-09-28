@@ -110,7 +110,7 @@ export const Modal = forwardRef<HTMLDivElement, ModalProps>(
         )}
         onClick={closeOnOverlayClick ? onClose : undefined}
       >
-        <div className={cn(overlayVariants({ placement }))} aria-hidden="true">
+        <div className={cn(overlayVariants({ placement }))}>
           <div
             ref={surfaceRef}
             tabIndex={-1}

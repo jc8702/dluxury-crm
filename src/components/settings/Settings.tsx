@@ -4,10 +4,11 @@ import { useFinanceStore as useFinance } from '../../stores/useFinanceStore';
 import { useToast } from '../../context/ToastContext';
 import { api } from '../../lib/api';
 import type { ConfiguracaoPrecificacao } from '../../types/entities';
-import { Button, Card, CardHeader, CardTitle } from '../../components/ui';
+import { Button, Card, CardHeader, CardTitle, FormActions } from '../../components/ui';
 import { CardBody as CardContent } from '../../components/ui';
 import { Modal, Badge, Input, CardSkeleton } from '../../components/common';
 import Header from '../../components/layout/Header';
+import { Select } from '../ui';
 
 const Settings: React.FC = () => {
   const { user, systemUsers, loadSystemUsers } = useAuth();
@@ -52,7 +53,9 @@ const Settings: React.FC = () => {
     }
   };
 
+  const [generatingBoleto, setGeneratingBoleto] = useState(false);
   const handleGerarBoleto = async () => {
+    setGeneratingBoleto(true);
     try {
       const res = await fetch('/api/checkout/gerar-boleto', {
         method: 'POST',
@@ -69,6 +72,8 @@ const Settings: React.FC = () => {
     } catch (err) {
       console.error(err);
       toastError('Erro ao gerar boleto.');
+    } finally {
+      setGeneratingBoleto(false);
     }
   };
 
@@ -261,13 +266,15 @@ const Settings: React.FC = () => {
                       {u.role}
                     </Badge>
                     {user?.id !== u.id && (
-                      <button
+                      <Button
+                        variant="plain"
+                        size="plain"
                         onClick={() => handleDeleteUser(u.id)}
                         className="text-destructive hover:text-destructive/80 transition-colors text-lg font-bold px-1"
                         title="Remover acesso"
                       >
                         Ã—
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -438,6 +445,7 @@ const Settings: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4 mt-4 border-t border-border/40 pt-4">
             <Button
               onClick={handleGerarBoleto}
+              isLoading={generatingBoleto}
               variant="primary"
               className="flex-1 font-semibold"
               disabled={subData?.status === 'suspended'}
@@ -500,7 +508,7 @@ const Settings: React.FC = () => {
               <label className="mb-2 block text-sm font-medium text-foreground/90">
                 Papel (Acesso)
               </label>
-              <select
+              <Select
                 className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
                 value={newUser.role}
                 onChange={(e) => setNewUser({ ...newUser, role: e.target.value as any })}
@@ -514,21 +522,9 @@ const Settings: React.FC = () => {
                 <option value="admin" style={{ background: '#1a1a1a' }}>
                   Administrador (Total)
                 </option>
-              </select>
+              </Select>
             </div>
-            <div className="flex gap-3 mt-4">
-              <Button type="submit" variant="primary" className="flex-1">
-                Cadastrar
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowUserModal(false)}
-                className="flex-1"
-              >
-                Cancelar
-              </Button>
-            </div>
+            <FormActions onCancel={() => setShowUserModal(false)} submitLabel="Cadastrar" />
           </form>
         </Modal>
       )}
@@ -580,7 +576,7 @@ const Settings: React.FC = () => {
                 Linha Digitável / Código de Barras
               </label>
               <div className="flex items-center gap-2">
-                <input
+                <Input
                   type="text"
                   readOnly
                   value={boletoData.codigoBarras}
@@ -645,14 +641,7 @@ const CondicaoModal: React.FC<{
           value={data.n_parcelas}
           onChange={(e) => setData({ ...data, n_parcelas: Number(e.target.value) })}
         />
-        <div className="flex gap-3 mt-4">
-          <Button type="submit" variant="primary" className="flex-1">
-            Salvar
-          </Button>
-          <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-            Cancelar
-          </Button>
-        </div>
+        <FormActions onCancel={onClose} submitLabel="Salvar" />
       </form>
     </Modal>
   );

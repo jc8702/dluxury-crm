@@ -15,15 +15,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/common/C
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { Modal } from '../components/common/Modal';
+import { FormActions } from '../components/ui';
 import { useRH } from '../modules/rh/hooks/useRH';
 import { ColaboradorForm } from '../modules/rh/components/ColaboradorForm';
 import { PresencaCalendario } from '../modules/rh/components/PresencaCalendario';
 import { AdiantamentoModal } from '../modules/rh/components/AdiantamentoModal';
 import { api } from '../lib/api';
+import { useToast } from '../context/ToastContext';
 
 type Tab = 'colaboradores' | 'presencas' | 'folhas' | 'adiantamentos';
 
 export default function RHPage() {
+  const { error: toastError } = useToast();
   const {
     colaboradores,
     loadColaboradores,
@@ -98,7 +101,7 @@ export default function RHPage() {
       await loadFolhas();
       await loadDashboard(competencia);
     } catch (e: any) {
-      alert(e.message);
+      toastError('Erro ao fechar folha', e.message || 'Tente novamente.');
     }
   };
   const handleReabrir = async (id: string) => {
@@ -107,7 +110,7 @@ export default function RHPage() {
       await api.rh.folhas.reabrir(id);
       await loadFolhas();
     } catch (e: any) {
-      alert(e.message);
+      toastError('Erro ao reabrir folha', e.message || 'Tente novamente.');
     }
   };
 
@@ -217,7 +220,9 @@ export default function RHPage() {
           { id: 'folhas', label: 'Folhas', icon: FileText },
           { id: 'adiantamentos', label: 'Adiantamentos', icon: Coins },
         ].map((t) => (
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             key={t.id}
             onClick={() => setTab(t.id as Tab)}
             className={`px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 ${tab === t.id ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'}`}
@@ -225,7 +230,7 @@ export default function RHPage() {
           >
             <t.icon size={16} />
             {t.label}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -280,7 +285,9 @@ export default function RHPage() {
                       </td>
                       <td className="p-2">{c.ativo ? 'Sim' : 'Não'}</td>
                       <td className="p-2 flex gap-2">
-                        <button
+                        <Button
+                          variant="plain"
+                          size="plain"
                           onClick={() => {
                             setEditingColab(c);
                             setShowColabForm(true);
@@ -289,8 +296,10 @@ export default function RHPage() {
                           data-testid={`btn-edit-${c.id}`}
                         >
                           Editar
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="plain"
                           onClick={async () => {
                             if (confirm(`Remover ${c.nome}?`)) {
                               await deleteColaborador(c.id);
@@ -300,7 +309,7 @@ export default function RHPage() {
                           data-testid={`btn-delete-${c.id}`}
                         >
                           Remover
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -385,21 +394,25 @@ export default function RHPage() {
                           Abrir
                         </Link>
                         {f.status === 'rascunho' ? (
-                          <button
+                          <Button
+                            variant="plain"
+                            size="plain"
                             onClick={() => handleFechar(f.id)}
                             className="px-3 py-1 rounded bg-success text-success-foreground text-xs"
                             data-testid={`btn-fechar-${f.id}`}
                           >
                             Fechar
-                          </button>
+                          </Button>
                         ) : (
-                          <button
+                          <Button
+                            variant="plain"
+                            size="plain"
                             onClick={() => handleReabrir(f.id)}
                             className="px-3 py-1 rounded bg-muted text-xs"
                             data-testid={`btn-reabrir-${f.id}`}
                           >
                             Reabrir
-                          </button>
+                          </Button>
                         )}
                       </td>
                     </tr>
@@ -522,18 +535,13 @@ export default function RHPage() {
             placeholder="2026-09"
             data-testid="input-nova-competencia"
           />
-          <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => setShowGerarFolha(false)}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleGerarFolha}
-              isLoading={loadingGerar}
-              data-testid="btn-confirm-gerar"
-            >
-              Gerar
-            </Button>
-          </div>
+          <FormActions
+            onCancel={() => setShowGerarFolha(false)}
+            onSubmit={handleGerarFolha}
+            loading={loadingGerar}
+            submitLabel="Gerar"
+            submitTestId="btn-confirm-gerar"
+          />
         </div>
       </Modal>
     </div>

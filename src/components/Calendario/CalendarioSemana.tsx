@@ -1,6 +1,7 @@
 import React from 'react';
 import type { EventoCalendarioType } from '../../services/calendarService.js';
 import { AlertCircle, Clock, PlusCircle } from 'lucide-react';
+import { Button } from '../ui';
 
 interface CalendarioSemanaProps {
   dataSelecionada: Date;
@@ -68,10 +69,14 @@ export default function CalendarioSemana({
                 {dia.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')}
               </span>
               <span className="text-xl font-extrabold">{dia.getDate()}</span>
-              <button className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 text-xs font-semibold text-primary mt-1 transition-opacity">
+              <Button
+                variant="plain"
+                size="plain"
+                className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 text-xs font-semibold text-primary mt-1 transition-opacity"
+              >
                 <PlusCircle className="w-3 h-3" />
                 Criar
-              </button>
+              </Button>
             </div>
 
             {/* Eventos do Dia */}

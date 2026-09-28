@@ -14,8 +14,13 @@ import type { EventoCalendarioType, TipoEventoType } from '../../services/calend
 import CalendarioMes from './CalendarioMes.tsx';
 import CalendarioSemana from './CalendarioSemana.tsx';
 import PopoverEvento from './PopoverEvento.tsx';
+import { useToast } from '../../context/ToastContext';
+import { Select } from '../ui';
 
+import { Input } from '../ui';
+import { Button, FormActions } from '../ui';
 export default function CalendarioIntegrado() {
+  const { error: toastError } = useToast();
   const [viewType, setViewType] = useState<'mes' | 'semana'>('mes');
   const [dataSelecionada, setDataSelecionada] = useState(new Date());
   const [eventos, setEventos] = useState<EventoCalendarioType[]>([]);
@@ -101,7 +106,7 @@ export default function CalendarioIntegrado() {
   const handleCriarEventoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitulo.trim() || !diaSelecionadoParaCriar) {
-      alert('Título do evento é obrigatório.');
+      toastError('Título obrigatório', 'Informe um título para o evento.');
       return;
     }
 
@@ -126,7 +131,7 @@ export default function CalendarioIntegrado() {
       carregarEventos();
     } catch (err: any) {
       console.error('Erro ao criar evento:', err);
-      alert(err.message || 'Erro ao criar evento.');
+      toastError('Erro ao criar evento', err.message || 'Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -170,42 +175,52 @@ export default function CalendarioIntegrado() {
         <div className="flex flex-wrap items-center gap-3">
           {/* Seletor de View */}
           <div className="flex rounded-xl bg-muted p-1 border border-border">
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               onClick={() => setViewType('mes')}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${viewType === 'mes' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
             >
               Mês
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="plain"
+              size="plain"
               onClick={() => setViewType('semana')}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${viewType === 'semana' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
             >
               Semana
-            </button>
+            </Button>
           </div>
 
           {/* Navegador */}
           <div className="flex items-center gap-1 border border-border bg-background rounded-xl p-1 shadow-sm">
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               onClick={() => handleNavegarMes('anterior')}
               className="p-1.5 hover:bg-muted rounded-lg text-foreground transition-all"
               title="Mês Anterior"
             >
               <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="plain"
+              size="plain"
               onClick={handleNavegarHoje}
               className="px-3 py-1 hover:bg-muted text-xs font-bold text-foreground rounded-lg transition-all"
             >
               Hoje
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="plain"
+              size="plain"
               onClick={() => handleNavegarMes('proximo')}
               className="p-1.5 hover:bg-muted rounded-lg text-foreground transition-all"
               title="Próximo Mês"
             >
               <ChevronRight className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -215,7 +230,7 @@ export default function CalendarioIntegrado() {
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-primary" />
           <span className="text-xs font-semibold text-foreground">Filtrar por Categoria:</span>
-          <select
+          <Select
             value={filtroTipo}
             onChange={(e) => setFiltroTipo(e.target.value)}
             className="px-3 py-1.5 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent transition-all cursor-pointer"
@@ -226,16 +241,18 @@ export default function CalendarioIntegrado() {
             <option value="lembrete_compra">Lembretes de Compra</option>
             <option value="tarefa">Tarefas Customizadas</option>
             <option value="reuniao">Reunião / Visita</option>
-          </select>
+          </Select>
         </div>
 
-        <button
+        <Button
+          variant="plain"
+          size="plain"
           onClick={() => abrirModalCriacao(new Date())}
           className="flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold rounded-lg shadow-sm transition-all"
         >
           <Plus className="w-4 h-4" />
           Criar Nova Tarefa
-        </button>
+        </Button>
       </div>
 
       {/* Agenda Views */}
@@ -281,12 +298,14 @@ export default function CalendarioIntegrado() {
               <h3 className="text-lg font-bold text-foreground">
                 Agendar para: {diaSelecionadoParaCriar.toLocaleDateString('pt-BR')}
               </h3>
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 onClick={() => setShowCreateModal(false)}
                 className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded-full transition-all"
               >
                 <XIcon className="w-5 h-5" />
-              </button>
+              </Button>
             </div>
 
             <form onSubmit={handleCriarEventoSubmit} className="p-6 space-y-4">
@@ -295,7 +314,7 @@ export default function CalendarioIntegrado() {
                 <label className="block text-xs font-semibold text-foreground mb-1">
                   Título do Evento *
                 </label>
-                <input
+                <Input
                   type="text"
                   required
                   placeholder="Ex: Assinatura de contrato, Reunião time..."
@@ -325,7 +344,7 @@ export default function CalendarioIntegrado() {
                   <label className="block text-xs font-semibold text-foreground mb-1">
                     Categoria
                   </label>
-                  <select
+                  <Select
                     value={formTipo}
                     onChange={(e) => handleTipoChange(e.target.value as TipoEventoType)}
                     className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all cursor-pointer"
@@ -333,7 +352,7 @@ export default function CalendarioIntegrado() {
                     <option value="tarefa">Tarefa</option>
                     <option value="lembrete_compra">Lembrete Compra</option>
                     <option value="reuniao">Reunião / Visita</option>
-                  </select>
+                  </Select>
                 </div>
 
                 <div>
@@ -341,7 +360,7 @@ export default function CalendarioIntegrado() {
                     <Clock className="w-3.5 h-3.5 text-muted-foreground" />
                     Horário (opcional)
                   </label>
-                  <input
+                  <Input
                     type="time"
                     value={formHora}
                     onChange={(e) => setFormHora(e.target.value)}
@@ -356,7 +375,7 @@ export default function CalendarioIntegrado() {
                   <label className="block text-xs font-semibold text-foreground mb-1">
                     Aviso Prévio (dias)
                   </label>
-                  <select
+                  <Select
                     value={formDiasAntes}
                     onChange={(e) => setFormDiasAntes(Number(e.target.value))}
                     className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all cursor-pointer"
@@ -365,7 +384,7 @@ export default function CalendarioIntegrado() {
                     <option value="1">1 dia antes</option>
                     <option value="3">3 dias antes</option>
                     <option value="5">5 dias antes</option>
-                  </select>
+                  </Select>
                 </div>
 
                 <div>
@@ -374,7 +393,9 @@ export default function CalendarioIntegrado() {
                   </label>
                   <div className="flex items-center gap-2 mt-2">
                     {['#28A745', '#0D66CC', '#FFC107', '#00A99D', '#DC3545'].map((c) => (
-                      <button
+                      <Button
+                        variant="plain"
+                        size="plain"
                         key={c}
                         type="button"
                         onClick={() => setFormCor(c)}
@@ -387,22 +408,11 @@ export default function CalendarioIntegrado() {
               </div>
 
               {/* Footer */}
-              <div className="flex justify-end gap-3 border-t border-border pt-4 mt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 border border-border bg-background hover:bg-muted text-xs font-semibold rounded-lg text-foreground transition-all"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-4 py-2 bg-primary hover:bg-primary/90 disabled:bg-muted text-primary-foreground text-xs font-semibold rounded-lg shadow-sm transition-all"
-                >
-                  Agendar
-                </button>
-              </div>
+              <FormActions
+                onCancel={() => setShowCreateModal(false)}
+                loading={loading}
+                submitLabel="Agendar"
+              />
             </form>
           </div>
         </div>

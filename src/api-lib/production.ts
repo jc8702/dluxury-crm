@@ -4,8 +4,8 @@ import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js
 import { logger } from './logger.js';
 
 /**
- * M�DULO MES (Manufacturing Execution System) - ARIA 4.0
- * Gest�o de Produ��o em Tempo Real
+ * MÓDULO MES (Manufacturing Execution System) - ARIA 4.0
+ * Gestão de Produção em Tempo Real
  */
 
 // --- 1. ROTAS DE CONTROLE ---
@@ -14,7 +14,7 @@ const handleProductionCore: TenantHandler = async (req, res) => {
   const method = req.method;
   const url = req.url || '';
 
-  // Extra��o robusta de ID/Sub-rota (suporta ?id=X ou /api/production/metrics)
+  // Extração robusta de ID/Sub-rota (suporta ?id=X ou /api/production/metrics)
   let { id } = req.query || {};
   if (!id && url.includes('/production/')) {
     id = url.split('/production/')[1].split('?')[0];

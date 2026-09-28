@@ -272,7 +272,9 @@ const ProductionPanel: React.FC = () => {
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-muted-foreground font-bold">#{op.op_id}</span>
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 onClick={(e) => {
                   e.stopPropagation();
                   deleteOP(op.op_id);
@@ -282,7 +284,7 @@ const ProductionPanel: React.FC = () => {
                 aria-label={`Excluir ordem de produção ${op.op_id}`}
               >
                 <Trash2 size={12} />
-              </button>
+              </Button>
             </div>
             <Badge tone="primary" className="text-[10px] font-bold py-0.5 px-2">
               {op.pecas} PEÃ‡AS
@@ -588,7 +590,7 @@ const ProductionPanel: React.FC = () => {
                             setEditingOP({ ...editingOP, checklist: newCheck });
                           }}
                         />
-                        <input
+                        <Input
                           value={item.task}
                           onChange={(e) => {
                             const newCheck = [...(editingOP.checklist || [])];
@@ -598,7 +600,9 @@ const ProductionPanel: React.FC = () => {
                           placeholder="Descrição da tarefa"
                           className={`flex-1 bg-transparent border-none focus:outline-none focus:ring-0 p-0 text-sm ${item.completed ? 'text-muted-foreground line-through' : 'text-foreground font-medium'}`}
                         />
-                        <button
+                        <Button
+                          variant="danger"
+                          size="plain"
                           onClick={() => {
                             const newCheck = (editingOP.checklist || []).filter(
                               (_, i) => i !== idx,
@@ -609,7 +613,7 @@ const ProductionPanel: React.FC = () => {
                           aria-label="Remover item do checklist"
                         >
                           <Trash2 size={14} />
-                        </button>
+                        </Button>
                       </div>
                     ))}
                   </div>

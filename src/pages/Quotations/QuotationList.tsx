@@ -14,7 +14,9 @@ import {
 } from 'lucide-react';
 import { Button } from '../../components/ui';
 import Header from '../../components/layout/Header';
+import { Select } from '../../components/ui';
 
+import { Input } from '../../components/ui';
 export type QuotationStatus =
   | 'RASCUNHO'
   | 'ENVIADO'
@@ -291,7 +293,7 @@ export const QuotationList: React.FC<QuotationListProps> = ({
                 pointerEvents: 'none',
               }}
             />
-            <input
+            <Input
               type="text"
               placeholder="Buscar por número ou cliente…"
               value={search}
@@ -317,7 +319,7 @@ export const QuotationList: React.FC<QuotationListProps> = ({
             />
           </div>
 
-          <select
+          <Select
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value as typeof statusFilter);
@@ -342,9 +344,9 @@ export const QuotationList: React.FC<QuotationListProps> = ({
                 {m.label}
               </option>
             ))}
-          </select>
+          </Select>
 
-          <select
+          <Select
             value={clientFilter}
             onChange={(e) => {
               setClientFilter(e.target.value);
@@ -369,11 +371,11 @@ export const QuotationList: React.FC<QuotationListProps> = ({
                 {c.name}
               </option>
             ))}
-          </select>
+          </Select>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <Calendar size={14} color={'#666666'} />
-            <input
+            <Input
               type="date"
               value={dateFrom}
               onChange={(e) => {
@@ -402,7 +404,7 @@ export const QuotationList: React.FC<QuotationListProps> = ({
             >
               até
             </span>
-            <input
+            <Input
               type="date"
               value={dateTo}
               onChange={(e) => {
@@ -426,7 +428,9 @@ export const QuotationList: React.FC<QuotationListProps> = ({
           </div>
 
           {hasActiveFilter && (
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               type="button"
               onClick={clearFilters}
               style={{
@@ -446,7 +450,7 @@ export const QuotationList: React.FC<QuotationListProps> = ({
               }}
             >
               <X size={12} /> Limpar filtros
-            </button>
+            </Button>
           )}
         </div>
 
@@ -612,7 +616,9 @@ export const QuotationList: React.FC<QuotationListProps> = ({
                           className="ds-row-actions"
                           style={{ display: 'inline-flex', gap: '4px' }}
                         >
-                          <button
+                          <Button
+                            variant="plain"
+                            size="plain"
                             type="button"
                             onClick={() => onView(q)}
                             aria-label={`Visualizar ${q.numeroOrcamento}`}
@@ -620,8 +626,10 @@ export const QuotationList: React.FC<QuotationListProps> = ({
                             style={iconBtn('#17A2B8', '#D1ECF1', '#7FC5D9')}
                           >
                             <Eye size={12} />
-                          </button>
-                          <button
+                          </Button>
+                          <Button
+                            variant="plain"
+                            size="plain"
                             type="button"
                             onClick={() => onEdit(q)}
                             aria-label={`Editar ${q.numeroOrcamento}`}
@@ -629,8 +637,10 @@ export const QuotationList: React.FC<QuotationListProps> = ({
                             style={iconBtn('#0D5FB8', '#F0F7FF', '#E0EFFF')}
                           >
                             <Edit3 size={12} />
-                          </button>
-                          <button
+                          </Button>
+                          <Button
+                            variant="plain"
+                            size="plain"
                             type="button"
                             onClick={() => onDelete(q)}
                             aria-label={`Excluir ${q.numeroOrcamento}`}
@@ -638,7 +648,7 @@ export const QuotationList: React.FC<QuotationListProps> = ({
                             style={iconBtn('#DC3545', '#FBE9EB', '#F0A8AE')}
                           >
                             <Trash2 size={12} />
-                          </button>
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -698,7 +708,9 @@ export const QuotationList: React.FC<QuotationListProps> = ({
 
         {onRefresh && (
           <div style={{ marginTop: '16px', textAlign: 'right' }}>
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               type="button"
               onClick={onRefresh}
               style={{
@@ -714,7 +726,7 @@ export const QuotationList: React.FC<QuotationListProps> = ({
               }}
             >
               Atualizar
-            </button>
+            </Button>
           </div>
         )}
       </section>

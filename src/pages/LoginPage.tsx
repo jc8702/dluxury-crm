@@ -3,6 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { api, setAuthToken, hasAuthToken } from '../lib/api';
 import { ChevronRight, Shield, Activity } from 'lucide-react';
 
+import { Input } from '../components/ui';
+import { Button } from '../components/ui';
 const LoginPage: React.FC = () => {
   const { setUser } = useAuth();
   const [email, setEmail] = useState('');
@@ -86,7 +88,7 @@ const LoginPage: React.FC = () => {
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                 E-mail Profissional
               </label>
-              <input
+              <Input
                 type="email"
                 required
                 value={email}
@@ -108,7 +110,7 @@ const LoginPage: React.FC = () => {
                   Esqueceu a senha?
                 </a>
               </div>
-              <input
+              <Input
                 type="password"
                 required
                 value={password}
@@ -128,19 +130,17 @@ const LoginPage: React.FC = () => {
               </div>
             )}
 
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               type="submit"
-              disabled={loading}
+              isLoading={loading}
               className="group relative flex items-center justify-center gap-2 w-full h-14 mt-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-base transition-all duration-300 disabled:opacity-70 shadow-[0_8px_20px_rgb(245,158,11,0.2)] hover:shadow-[0_12px_25px_rgb(245,158,11,0.3)] hover:-translate-y-0.5 overflow-hidden"
             >
-              <span className="relative z-10">
-                {loading ? 'Autenticando...' : 'Entrar no Sistema'}
-              </span>
-              {!loading && (
-                <ChevronRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
-              )}
+              <span className="relative z-10">Entrar no Sistema</span>
+              <ChevronRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
-            </button>
+            </Button>
           </form>
 
           {/* Footer Sec */}

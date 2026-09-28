@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { STATUS_CONFIG, ORIGENS } from '../../hooks/crm/useProspeccaoFilters';
 import type { Prospeccao } from '../../hooks/crm/useProspeccaoHook';
+import { Select } from '../ui';
 
+import { Input } from '../ui';
+import { Button } from '../ui';
+import { FormActions } from '../ui';
 interface Props {
   initial?: Prospeccao | null;
   onClose: () => void;
@@ -60,12 +64,14 @@ export function ProspeccaoFormModal({ initial, onClose, onSave }: Props) {
           <h2 className="text-lg font-bold text-foreground">
             {initial ? 'Editar Prospecção' : 'Nova Prospecção'}
           </h2>
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             onClick={onClose}
             className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors text-xl font-bold"
           >
             &times;
-          </button>
+          </Button>
         </div>
         <form
           onSubmit={handleSubmit}
@@ -74,7 +80,7 @@ export function ProspeccaoFormModal({ initial, onClose, onSave }: Props) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
               <label className="block text-xs font-semibold text-foreground mb-1">Nome *</label>
-              <input
+              <Input
                 className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border"
                 required
                 value={form.nome}
@@ -86,7 +92,7 @@ export function ProspeccaoFormModal({ initial, onClose, onSave }: Props) {
               <label className="block text-xs font-semibold text-foreground mb-1">
                 Telefone / WhatsApp
               </label>
-              <input
+              <Input
                 className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border"
                 value={form.telefone}
                 onChange={(e) => set('telefone', e.target.value)}
@@ -95,7 +101,7 @@ export function ProspeccaoFormModal({ initial, onClose, onSave }: Props) {
             </div>
             <div>
               <label className="block text-xs font-semibold text-foreground mb-1">E-mail</label>
-              <input
+              <Input
                 className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border"
                 type="email"
                 value={form.email}
@@ -105,7 +111,7 @@ export function ProspeccaoFormModal({ initial, onClose, onSave }: Props) {
             </div>
             <div>
               <label className="block text-xs font-semibold text-foreground mb-1">Cidade</label>
-              <input
+              <Input
                 className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border"
                 value={form.cidade}
                 onChange={(e) => set('cidade', e.target.value)}
@@ -114,7 +120,7 @@ export function ProspeccaoFormModal({ initial, onClose, onSave }: Props) {
             </div>
             <div>
               <label className="block text-xs font-semibold text-foreground mb-1">UF</label>
-              <input
+              <Input
                 className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border"
                 value={form.uf}
                 onChange={(e) => set('uf', e.target.value.toUpperCase())}
@@ -124,7 +130,7 @@ export function ProspeccaoFormModal({ initial, onClose, onSave }: Props) {
             </div>
             <div>
               <label className="block text-xs font-semibold text-foreground mb-1">Status</label>
-              <select
+              <Select
                 className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border cursor-pointer"
                 value={form.status}
                 onChange={(e) => set('status', e.target.value)}
@@ -134,13 +140,13 @@ export function ProspeccaoFormModal({ initial, onClose, onSave }: Props) {
                     {v.label}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
               <label className="block text-xs font-semibold text-foreground mb-1">
                 Temperatura
               </label>
-              <select
+              <Select
                 className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border cursor-pointer"
                 value={form.temperatura}
                 onChange={(e) => set('temperatura', e.target.value)}
@@ -148,11 +154,11 @@ export function ProspeccaoFormModal({ initial, onClose, onSave }: Props) {
                 <option value="frio">❄️ Frio</option>
                 <option value="morno">🌡️ Morno</option>
                 <option value="quente">🔥 Quente</option>
-              </select>
+              </Select>
             </div>
             <div>
               <label className="block text-xs font-semibold text-foreground mb-1">Origem</label>
-              <select
+              <Select
                 className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border cursor-pointer"
                 value={form.origem}
                 onChange={(e) => set('origem', e.target.value)}
@@ -162,13 +168,13 @@ export function ProspeccaoFormModal({ initial, onClose, onSave }: Props) {
                     {o.replace(/_/g, ' ')}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
               <label className="block text-xs font-semibold text-foreground mb-1">
                 Orçamento Estimado (R$)
               </label>
-              <input
+              <Input
                 className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border"
                 type="number"
                 min="0"
@@ -219,7 +225,7 @@ export function ProspeccaoFormModal({ initial, onClose, onSave }: Props) {
               <label className="block text-xs font-semibold text-foreground mb-1">
                 Prazo Desejado (Dias)
               </label>
-              <input
+              <Input
                 className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border"
                 type="number"
                 min="1"
@@ -240,23 +246,11 @@ export function ProspeccaoFormModal({ initial, onClose, onSave }: Props) {
               />
             </div>
           </div>
-          <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-2.5 bg-card hover:bg-muted text-foreground border border-border rounded-xl text-sm font-semibold transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-              style={{ background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}
-            >
-              {saving ? 'Salvando...' : initial ? 'Atualizar' : 'Criar Lead'}
-            </button>
-          </div>
+          <FormActions
+            onCancel={onClose}
+            loading={saving}
+            submitLabel={initial ? 'Atualizar' : 'Criar Lead'}
+          />
         </form>
       </div>
     </div>

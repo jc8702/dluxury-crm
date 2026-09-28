@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { AlertCircle, Calendar, User, Clock, Mail, Phone, Filter, ArrowLeft } from 'lucide-react';
+import { AlertCircle, Calendar, User, Clock, Mail, Phone, Filter } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { TableSkeleton } from '../components/common/Skeleton';
 import { Button, Card, CardHeader, CardTitle } from '../components/ui';
 import { CardBody as CardContent } from '../components/ui';
 import { Modal, Badge } from '../components/common';
+import { BackButton } from '../components/ui';
 
 export default function FinanceiroAgingPage() {
   const { warning } = useToast();
@@ -113,13 +114,10 @@ export default function FinanceiroAgingPage() {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <Button
-        variant="ghost"
+      <BackButton
+        label="Voltar ao Painel Financeiro"
         onClick={() => (window.location.hash = '#/financeiro')}
-        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 p-0 h-auto hover:bg-transparent"
-      >
-        <ArrowLeft size={16} /> Voltar ao Painel Financeiro
-      </Button>
+      />
 
       <div
         style={{

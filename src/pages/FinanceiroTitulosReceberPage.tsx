@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { Button } from '../components/ui';
 import { Modal, Input } from '../components/common';
@@ -15,7 +15,6 @@ import {
   Printer,
   TrendingUp,
   MessageCircle,
-  ArrowLeft,
 } from 'lucide-react';
 import { WhatsAppService } from '../modules/plano-corte/infrastructure/services/WhatsAppService';
 import ReciboModal from '../components/ReciboModal';
@@ -25,6 +24,8 @@ import type { Titulo, ContaInterna } from '../modules/financeiro/domain/types';
 import { TableSkeleton } from '../components/common/Skeleton';
 import FinanceiroTitulosReceberWizard from './FinanceiroTitulosReceberWizard';
 import { X } from 'lucide-react';
+import { Select } from '../components/ui';
+import { BackButton } from '../components/ui';
 
 export default function FinanceiroTitulosReceberPage() {
   const { success, error } = useToast();
@@ -150,13 +151,10 @@ export default function FinanceiroTitulosReceberPage() {
 
   return (
     <div className="p-8 max-w-[1600px] mx-auto animate-fade-in">
-      <Button
-        variant="ghost"
+      <BackButton
+        label="Voltar ao Painel Financeiro"
         onClick={() => (window.location.hash = '#/financeiro')}
-        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 p-0 h-auto hover:bg-transparent"
-      >
-        <ArrowLeft size={16} /> Voltar ao Painel Financeiro
-      </Button>
+      />
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
         <div>
@@ -670,7 +668,7 @@ export default function FinanceiroTitulosReceberPage() {
                   <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block ml-1">
                     Conta Bancária de Destino
                   </label>
-                  <select
+                  <Select
                     id="conta-interna-id-receber"
                     className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary uppercase font-bold"
                   >
@@ -683,7 +681,7 @@ export default function FinanceiroTitulosReceberPage() {
                         })}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
 
                 <div className="flex gap-4 justify-end">
@@ -744,7 +742,7 @@ export default function FinanceiroTitulosReceberPage() {
               <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block ml-1">
                 Status Operacional
               </label>
-              <select
+              <Select
                 className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary uppercase font-bold"
                 value={editModal?.status || ''}
                 onChange={(e) =>
@@ -754,7 +752,7 @@ export default function FinanceiroTitulosReceberPage() {
                 <option value="aberto">ABERTO / PENDENTE</option>
                 <option value="pago">LIQUIDADO</option>
                 <option value="cancelado">CANCELADO</option>
-              </select>
+              </Select>
             </div>
           </div>
 
@@ -837,12 +835,14 @@ export default function FinanceiroTitulosReceberPage() {
               <h2 className="text-lg font-bold text-foreground">
                 Novo Lançamento - Contas a Receber
               </h2>
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 onClick={() => setIsWizardOpen(false)}
                 className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
               >
                 <X size={20} />
-              </button>
+              </Button>
             </div>
 
             {/* Body do Drawer com Scroll */}

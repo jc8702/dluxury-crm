@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../../../components/common/Modal';
-import { Button } from '../../../components/common/Button';
 import { Input } from '../../../components/common/Input';
+import { Select, FormActions } from '../../../components/ui';
 
 interface Props {
   isOpen: boolean;
@@ -168,7 +168,7 @@ export function ColaboradorForm({ isOpen, onClose, onSubmit, initial }: Props) {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="mb-2 block text-sm font-medium text-foreground/90">Tipo *</label>
-            <select
+            <Select
               value={form.tipo}
               onChange={(e) => setForm({ ...form, tipo: e.target.value })}
               className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm"
@@ -176,11 +176,11 @@ export function ColaboradorForm({ isOpen, onClose, onSubmit, initial }: Props) {
             >
               <option value="colaborador_fixo">Colaborador Fixo</option>
               <option value="socio">Sócio</option>
-            </select>
+            </Select>
           </div>
           <div>
             <label className="mb-2 block text-sm font-medium text-foreground/90">Vínculo</label>
-            <select
+            <Select
               value={form.vinculo}
               onChange={(e) => setForm({ ...form, vinculo: e.target.value })}
               className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm"
@@ -189,7 +189,7 @@ export function ColaboradorForm({ isOpen, onClose, onSubmit, initial }: Props) {
               <option value="informal">Informal</option>
               <option value="mei">MEI</option>
               <option value="clt">CLT</option>
-            </select>
+            </Select>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -245,14 +245,13 @@ export function ColaboradorForm({ isOpen, onClose, onSubmit, initial }: Props) {
             Ativo
           </label>
         </div>
-        <div className="flex justify-end gap-3 pt-2">
-          <Button type="button" variant="secondary" onClick={onClose} data-testid="btn-cancel">
-            Cancelar
-          </Button>
-          <Button type="submit" isLoading={loading} data-testid="btn-salvar">
-            Salvar
-          </Button>
-        </div>
+        <FormActions
+          onCancel={onClose}
+          loading={loading}
+          submitLabel="Salvar"
+          cancelTestId="btn-cancel"
+          submitTestId="btn-salvar"
+        />
       </form>
     </Modal>
   );

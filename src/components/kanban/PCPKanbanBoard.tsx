@@ -5,8 +5,11 @@ import KanbanColumn from './KanbanColumn.tsx';
 import KanbanFilters from './KanbanFilters.tsx';
 import KanbanCardDetail from './KanbanCardDetail.tsx';
 import { ShieldAlert, RefreshCw } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
+import { Button } from '../ui';
 
 export default function PCPKanbanBoard() {
+  const { error: toastError } = useToast();
   const [boardData, setBoardData] = useState<KanbanBoardData>({
     a_fazer: [],
     em_progresso: [],
@@ -94,7 +97,7 @@ export default function PCPKanbanBoard() {
       carregarBoard();
     } catch (err: any) {
       console.error('Falha ao mover etapa no banco de dados:', err);
-      alert(`Falha ao salvar a movimentação: ${err.message || 'Erro interno'}`);
+      toastError('Falha ao salvar a movimentação', err.message || 'Erro interno');
       // Reverter se der erro
       setBoardData(oldBoard);
     }
@@ -125,7 +128,9 @@ export default function PCPKanbanBoard() {
     <div className="space-y-6">
       {/* Botão de recarregar discreto */}
       <div className="flex justify-end pr-2">
-        <button
+        <Button
+          variant="outline"
+          size="plain"
           onClick={carregarBoard}
           disabled={loading}
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-border bg-background hover:bg-muted text-foreground rounded-lg transition-all cursor-pointer"
@@ -133,7 +138,7 @@ export default function PCPKanbanBoard() {
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           Atualizar Quadro
-        </button>
+        </Button>
       </div>
 
       {/* Filtros */}

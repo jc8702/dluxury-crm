@@ -14,7 +14,10 @@ import {
 
 import { useQuotation } from '../../modules/quotations/hooks/useQuotation';
 import type { Quotation, QuotationStatus } from './QuotationList';
+import { Select } from '../../components/ui';
 
+import { Input } from '../../components/ui';
+import { Button } from '../../components/ui';
 export interface QuotationItem {
   id: string;
   skuId?: string;
@@ -434,48 +437,12 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
           </p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            type="button"
-            onClick={onCancel}
-            style={{
-              background: '#FFFFFF',
-              color: '#1A1A1A',
-              border: `1px solid #E0E0E0`,
-              borderRadius: '8px',
-              padding: `8px 24px`,
-              fontSize: '14px',
-              fontWeight: 600,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-            }}
-          >
-            <X size={16} /> Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={saving}
-            style={{
-              background: '#0D66CC',
-              color: '#FFFFFF',
-              border: 'none',
-              borderRadius: '8px',
-              padding: `8px 24px`,
-              fontSize: '14px',
-              fontWeight: 600,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              boxShadow: `0 4px 12px #0D66CC40`,
-              cursor: saving ? 'not-allowed' : 'pointer',
-              opacity: saving ? 0.6 : 1,
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-            }}
-          >
-            <Save size={16} /> {saving ? 'Salvando...' : 'Salvar Proposta'}
-          </button>
+          <Button variant="outline" type="button" onClick={onCancel} leftIcon={<X size={16} />}>
+            Cancelar
+          </Button>
+          <Button variant="primary" type="submit" isLoading={saving} leftIcon={<Save size={16} />}>
+            Salvar Proposta
+          </Button>
         </div>
       </header>
 
@@ -501,7 +468,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
             <label htmlFor="clienteId" style={fieldLabel}>
               Cliente<span style={requiredMark}>*</span>
             </label>
-            <select
+            <Select
               id="clienteId"
               value={clienteId}
               onChange={(e) => setClienteId(e.target.value)}
@@ -514,7 +481,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                   {c.nome}
                 </option>
               ))}
-            </select>
+            </Select>
             {errors.clienteId && (
               <p style={errorText} role="alert">
                 <AlertCircle size={12} /> {errors.clienteId}
@@ -526,7 +493,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
             <label htmlFor="numero" style={fieldLabel}>
               Número
             </label>
-            <input
+            <Input
               id="numero"
               type="text"
               value={quotation?.numeroOrcamento || 'Gerado automaticamente ao salvar'}
@@ -543,7 +510,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
             <label htmlFor="margem" style={fieldLabel}>
               Margem de Lucro (%)<span style={requiredMark}>*</span>
             </label>
-            <input
+            <Input
               id="margem"
               type="number"
               min={0}
@@ -575,7 +542,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
             <label htmlFor="taxa" style={fieldLabel}>
               Taxa Financeira (%)
             </label>
-            <input
+            <Input
               id="taxa"
               type="number"
               min={0}
@@ -597,7 +564,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
             <label htmlFor="validade" style={fieldLabel}>
               Validade (dias)<span style={requiredMark}>*</span>
             </label>
-            <input
+            <Input
               id="validade"
               type="number"
               min={1}
@@ -617,7 +584,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
             <label htmlFor="status" style={fieldLabel}>
               Status
             </label>
-            <select
+            <Select
               id="status"
               value={status}
               onChange={(e) => setStatus(e.target.value as QuotationStatus)}
@@ -628,7 +595,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                   {o.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         </div>
       </section>
@@ -656,7 +623,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
               pointerEvents: 'none',
             }}
           />
-          <input
+          <Input
             type="text"
             placeholder="Buscar SKU de engenharia para adicionar…"
             value={skuSearch}
@@ -680,7 +647,9 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
               }}
             >
               {skus.map((sku) => (
-                <button
+                <Button
+                  variant="plain"
+                  size="plain"
                   key={sku.id}
                   type="button"
                   onClick={() => handleAddItem(sku)}
@@ -740,7 +709,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                     </span>
                     <Plus size={16} color={'#0D66CC'} />
                   </div>
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -844,7 +813,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                         )}
                       </td>
                       <td style={{ padding: '16px', textAlign: 'center' }}>
-                        <input
+                        <Input
                           type="number"
                           min={0}
                           step="0.01"
@@ -865,7 +834,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                         </div>
                       </td>
                       <td style={{ padding: '16px', textAlign: 'right' }}>
-                        <input
+                        <Input
                           type="number"
                           min={0}
                           step="0.01"
@@ -898,7 +867,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                             gap: '4px',
                           }}
                         >
-                          <input
+                          <Input
                             type="text"
                             placeholder="SKU da fita (opcional)"
                             value={fitaSku}
@@ -968,7 +937,9 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                         </div>
                       </td>
                       <td style={{ padding: '16px', textAlign: 'center' }}>
-                        <button
+                        <Button
+                          variant="plain"
+                          size="plain"
                           type="button"
                           onClick={() => handleRemoveItem(item.id)}
                           aria-label="Remover item"
@@ -993,7 +964,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                           }}
                         >
                           <Trash2 size={12} />
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   );

@@ -2,7 +2,10 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Save, FileText } from 'lucide-react';
 import * as calc from '../domain/calculations';
 import type { TipoHE } from '../domain/types';
+import { Select } from '../../../components/ui';
 
+import { Input } from '../../../components/ui';
+import { Button } from '../../../components/ui';
 interface FolhaGridProps {
   folhaId: string;
   itens: any[];
@@ -251,7 +254,7 @@ export function FolhaGrid({
               {/* HE Tipo */}
               <td className="p-2 text-center">
                 {editable ? (
-                  <select
+                  <Select
                     value={row.horasExtrasTipo}
                     onChange={(e) => updateField(idx, 'horasExtrasTipo', e.target.value as TipoHE)}
                     className="bg-background border rounded px-1.5 py-1 text-xs w-16"
@@ -259,7 +262,7 @@ export function FolhaGrid({
                   >
                     <option value="50">50%</option>
                     <option value="100">100%</option>
-                  </select>
+                  </Select>
                 ) : (
                   <span className="text-xs">{row.horasExtrasTipo}%</span>
                 )}
@@ -269,7 +272,7 @@ export function FolhaGrid({
               <td className="p-2 text-right font-mono">
                 {editable ? (
                   <div className="flex items-center gap-1 justify-end">
-                    <input
+                    <Input
                       type="number"
                       step="0.5"
                       min="0"
@@ -297,7 +300,7 @@ export function FolhaGrid({
               <td className="p-2 text-right font-mono">
                 {editable ? (
                   <div className="flex items-center gap-1 justify-end">
-                    <input
+                    <Input
                       type="number"
                       step="0.5"
                       min="0"
@@ -322,7 +325,7 @@ export function FolhaGrid({
               {/* Bônus */}
               <td className="p-2 text-right font-mono">
                 {editable ? (
-                  <input
+                  <Input
                     type="number"
                     step="50"
                     min="0"
@@ -347,7 +350,7 @@ export function FolhaGrid({
               {/* Outros descontos */}
               <td className="p-2 text-right font-mono">
                 {editable ? (
-                  <input
+                  <Input
                     type="number"
                     step="10"
                     min="0"
@@ -384,7 +387,9 @@ export function FolhaGrid({
               <td className="p-2 text-center">
                 <div className="flex items-center gap-1 justify-center">
                   {editable && row.dirty && (
-                    <button
+                    <Button
+                      variant="plain"
+                      size="plain"
                       onClick={() => saveRow(idx)}
                       disabled={row.saving}
                       className="px-2 py-1 rounded bg-primary text-primary-foreground text-xs flex items-center gap-1 disabled:opacity-50"
@@ -392,17 +397,19 @@ export function FolhaGrid({
                     >
                       <Save size={12} />
                       {row.saving ? '...' : 'Salvar'}
-                    </button>
+                    </Button>
                   )}
                   {onReciboClick && (
-                    <button
+                    <Button
+                      variant="plain"
+                      size="plain"
                       onClick={() => onReciboClick(row.id)}
                       className="px-2 py-1 rounded bg-muted hover:bg-muted/80 text-xs flex items-center gap-1"
                       data-testid={`btn-recibo-${row.id}`}
                     >
                       <FileText size={12} />
                       Recibo
-                    </button>
+                    </Button>
                   )}
                 </div>
               </td>

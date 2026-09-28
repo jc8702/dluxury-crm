@@ -4,7 +4,10 @@ import { X, Calendar, MapPin, Clock, Trash2 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useEscClose } from '../../hooks/useEscClose';
 import { Card } from '../common';
+import { Select } from '../ui';
 
+import { Input } from '../ui';
+import { Button, FormActions } from '../ui';
 interface ModalEventoProps {
   isOpen: boolean;
   onClose: () => void;
@@ -24,7 +27,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
     data_inicio: '',
     data_fim: '',
     dia_inteiro: false,
-    cliente_id: null as number | null,
+    cliente_id: null as string | number | null,
     projeto_id: null as string | null,
     endereco: '',
     objetivo: 'outro',
@@ -171,13 +174,15 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
               {eventToEdit?.id ? 'EDITAR EVENTO' : 'NOVO EVENTO'}
             </h2>
           </div>
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             onClick={onClose}
             className="btn"
             style={{ padding: '0.5rem', minWidth: 0, background: 'transparent' }}
           >
             <X size={24} />
-          </button>
+          </Button>
         </div>
 
         {/* Body */}
@@ -208,7 +213,9 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
               { id: 'visita', label: 'VISITA TÉCNICA', color: '#00A99D' },
               { id: 'reuniao', label: 'REUNIÃO', color: '#0D66CC' },
             ].map((t) => (
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 key={t.id}
                 type="button"
                 onClick={() => setFormData({ ...formData, tipo: t.id, cor: t.color })}
@@ -227,14 +234,14 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
                 }}
               >
                 {t.label}
-              </button>
+              </Button>
             ))}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
               <label className="label-base">TÍTULO DO EVENTO *</label>
-              <input
+              <Input
                 required
                 value={formData.titulo}
                 onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
@@ -247,13 +254,13 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
               <label className="label-base">
                 CLIENTE {formData.tipo === 'visita' ? '*' : '(OPCIONAL)'}
               </label>
-              <select
+              <Select
                 required={formData.tipo === 'visita'}
                 value={formData.cliente_id || ''}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    cliente_id: e.target.value ? Number(e.target.value) : null,
+                    cliente_id: e.target.value || null,
                   })
                 }
                 className="input-base"
@@ -264,7 +271,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
                     {c.nome}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div className="grid-2">
@@ -281,7 +288,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
                       color: 'hsl(var(--muted-foreground))',
                     }}
                   />
-                  <input
+                  <Input
                     required
                     type="datetime-local"
                     value={formData.data_inicio}
@@ -304,7 +311,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
                       color: 'hsl(var(--muted-foreground))',
                     }}
                   />
-                  <input
+                  <Input
                     required
                     type="datetime-local"
                     value={formData.data_fim}
@@ -322,7 +329,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
                   <label className="label-base" style={{ color: 'hsl(var(--primary))' }}>
                     OBJETIVO
                   </label>
-                  <select
+                  <Select
                     value={formData.objetivo}
                     onChange={(e) => setFormData({ ...formData, objetivo: e.target.value })}
                     className="input-base"
@@ -332,7 +339,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
                     <option value="instalacao">INSTALAÇÃO</option>
                     <option value="pos_venda">PÓS-VENDA</option>
                     <option value="outro">OUTRO</option>
-                  </select>
+                  </Select>
                 </div>
                 <div>
                   <label className="label-base" style={{ color: 'hsl(var(--primary))' }}>
@@ -349,7 +356,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
                         color: 'hsl(var(--muted-foreground))',
                       }}
                     />
-                    <input
+                    <Input
                       value={formData.endereco}
                       onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
                       className="input-base"
@@ -375,7 +382,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
             <div className="grid-2">
               <div>
                 <label className="label-base">RESPONSÁVEL</label>
-                <select
+                <Select
                   required
                   value={formData.responsavel_id}
                   onChange={(e) => setFormData({ ...formData, responsavel_id: e.target.value })}
@@ -384,7 +391,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
                   <option value="admin">ADMINISTRADOR</option>
                   <option value="vendedor">VENDEDOR</option>
                   <option value="marceneiro">MARCENEIRO</option>
-                </select>
+                </Select>
               </div>
               <div>
                 <label className="label-base">COR DE EXIBIÇÃO</label>
@@ -417,44 +424,25 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
           </div>
 
           {/* Footer */}
-          <div
-            style={{
-              marginTop: '1rem',
-              paddingTop: '1.5rem',
-              borderTop: '1px solid hsl(var(--border))',
-              display: 'flex',
-              justifyContent: 'space-between',
-            }}
-          >
-            <div>
-              {eventToEdit?.id && (
-                <button
+          <FormActions
+            left={
+              eventToEdit?.id ? (
+                <Button
+                  variant="danger"
                   type="button"
                   onClick={handleDelete}
-                  className="btn btn-outline"
-                  style={{
-                    color: 'hsl(var(--destructive))',
-                    borderColor: 'hsl(var(--destructive))',
-                  }}
+                  disabled={loading}
+                  leftIcon={<Trash2 size={18} />}
                 >
-                  <Trash2 size={18} /> EXCLUIR
-                </button>
-              )}
-            </div>
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <button type="button" onClick={onClose} className="btn btn-outline">
-                CANCELAR
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn btn-primary"
-                style={{ padding: '0.75rem 2.5rem' }}
-              >
-                {loading ? 'SALVANDO...' : 'CONFIRMAR'}
-              </button>
-            </div>
-          </div>
+                  EXCLUIR
+                </Button>
+              ) : null
+            }
+            onCancel={onClose}
+            cancelLabel="CANCELAR"
+            loading={loading}
+            submitLabel="CONFIRMAR"
+          />
         </form>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import React, { Component, type ErrorInfo, type ReactNode } from 'react';
 import { logger } from '../../utils/logger';
 import * as Sentry from '@sentry/react';
+import { Button } from '../ui';
 
 interface Props {
   children: ReactNode;
@@ -58,18 +59,22 @@ export class ErrorBoundary extends Component<Props, State> {
           </p>
 
           <div className="flex gap-3 mt-4">
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               onClick={() => this.setState({ hasError: false, error: null })}
               className="px-4 py-2 bg-secondary text-secondary-foreground rounded hover:bg-secondary/80 transition-colors text-sm font-semibold"
             >
               Tentar Novamente
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
+              size="plain"
               onClick={() => window.location.reload()}
               className="px-4 py-2 border border-border text-foreground rounded hover:bg-accent transition-colors text-sm font-semibold"
             >
               Recarregar Página
-            </button>
+            </Button>
           </div>
 
           <details className="mt-6 w-full max-w-2xl text-left bg-muted/50 p-4 rounded-md text-xs text-muted-foreground">

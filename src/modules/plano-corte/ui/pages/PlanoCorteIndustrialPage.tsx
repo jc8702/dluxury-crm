@@ -12,7 +12,6 @@ import {
   CheckCircle,
   Printer,
   Cpu,
-  Loader2,
   AlertTriangle,
   FileSpreadsheet,
 } from 'lucide-react';
@@ -42,6 +41,7 @@ import type {
   ResultadoOtimizacaoPorChapa,
 } from '../../domain/types.js';
 
+import { Input } from '../../../../components/ui';
 // ────────────────────────────────────────────────────────────────────────────────
 // COMPONENTES AUXILIARES
 // ────────────────────────────────────────────────────────────────────────────────
@@ -74,9 +74,14 @@ const Toast = ({
     >
       <Icon size={18} />
       <span className="text-sm font-medium">{message}</span>
-      <button onClick={onClose} className="ml-2 hover:opacity-70 transition-opacity">
+      <Button
+        variant="plain"
+        size="plain"
+        onClick={onClose}
+        className="ml-2 hover:opacity-70 transition-opacity"
+      >
         <X size={14} />
-      </button>
+      </Button>
     </div>
   );
 };
@@ -567,7 +572,7 @@ export default function PlanoCorteIndustrialPage() {
                 Live
               </div>
             </div>
-            <input
+            <Input
               value={projeto.nome}
               onChange={(e) =>
                 setProjeto((prev) => ({ ...prev, nome: e.target.value.toUpperCase() }))
@@ -644,7 +649,8 @@ export default function PlanoCorteIndustrialPage() {
             <Button
               variant="primary"
               onClick={handleAprovarProducao}
-              disabled={loading || Object.keys(resultados).length === 0}
+              isLoading={loading}
+              disabled={Object.keys(resultados).length === 0}
               className="bg-success text-success-foreground hover:bg-success/90 h-11 flex items-center gap-2"
             >
               <CheckCircle size={16} />
@@ -655,10 +661,10 @@ export default function PlanoCorteIndustrialPage() {
           <Button
             variant="primary"
             onClick={handleSalvarProjeto}
-            disabled={loading}
+            isLoading={loading}
             className="flex items-center gap-2 h-11"
           >
-            {loading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            <Save size={16} />
             Salvar Projeto
           </Button>
 
@@ -781,14 +787,10 @@ export default function PlanoCorteIndustrialPage() {
                   </div>
                   <Button
                     onClick={handleAprovarProducao}
-                    disabled={loading}
+                    isLoading={loading}
                     className="w-full h-12 bg-[#10B981] hover:bg-[#059669] text-white font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-[#10B981]/10 disabled:opacity-30 flex items-center justify-center gap-2"
                   >
-                    {loading ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <CheckCircle size={16} />
-                    )}
+                    <CheckCircle size={16} />
                     Aprovar Produção
                   </Button>
                 </div>

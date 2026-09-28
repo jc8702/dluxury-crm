@@ -1,21 +1,14 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { Button, Card } from '../components/ui';
+import { Button, Card, FormActions } from '../components/ui';
 import { CardBody as CardContent } from '../components/ui';
 import { Modal, Badge, Input } from '../components/common';
-import {
-  Plus,
-  Edit2,
-  Trash2,
-  ChevronDown,
-  ChevronRight,
-  Layers,
-  Activity,
-  ArrowLeft,
-} from 'lucide-react';
+import { Plus, Edit2, Trash2, ChevronDown, ChevronRight, Layers, Activity } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
 import { CardSkeleton } from '../components/common/Skeleton';
+import { Select } from '../components/ui';
+import { BackButton } from '../components/ui';
 
 interface ClasseFinanceira {
   id: string;
@@ -247,7 +240,9 @@ function TreeNode({
         }
       >
         {/* Expand toggle */}
-        <button
+        <Button
+          variant="plain"
+          size="plain"
           onClick={() => setExpanded((e) => !e)}
           style={{
             background: 'none',
@@ -272,7 +267,7 @@ function TreeNode({
           ) : (
             <span style={{ width: '14px' }} />
           )}
-        </button>
+        </Button>
 
         {/* Código */}
         <span
@@ -414,8 +409,10 @@ export default function FinanceiroClassesPage() {
     }
   };
 
+  const [savingClass, setSavingClass] = useState(false);
   const handleSave = async () => {
     if (!modal) return;
+    setSavingClass(true);
     try {
       if (modal.id) {
         await api.financeiro.classesFinanceiras.update({ ...modal });
@@ -427,6 +424,8 @@ export default function FinanceiroClassesPage() {
       success('Classe salva com sucesso!');
     } catch (err: any) {
       error(err.message || 'Erro ao salvar classe');
+    } finally {
+      setSavingClass(false);
     }
   };
 
@@ -455,23 +454,10 @@ export default function FinanceiroClassesPage() {
 
   return (
     <div className="page-container anim-fade-in" style={{ padding: '1rem' }}>
-      <Button
-        variant="ghost"
+      <BackButton
+        label="Voltar ao Painel Financeiro"
         onClick={() => (window.location.hash = '#/financeiro')}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          fontSize: '0.8rem',
-          color: 'hsl(var(--muted-foreground))',
-          marginBottom: '1rem',
-          padding: 0,
-          height: 'auto',
-          background: 'transparent',
-        }}
-      >
-        <ArrowLeft size={16} /> Voltar ao Painel Financeiro
-      </Button>
+      />
 
       {/* Header */}
       <div
@@ -514,7 +500,7 @@ export default function FinanceiroClassesPage() {
             <Button
               variant="outline"
               onClick={handleSeed}
-              disabled={seeding}
+              isLoading={seeding}
               style={{ fontSize: '0.8rem' }}
             >
               {seeding ? 'â³ Criando...' : 'â¨ CRIAR PLANO MARCENARIA'}
@@ -700,7 +686,7 @@ export default function FinanceiroClassesPage() {
                 >
                   Tipo *
                 </label>
-                <select
+                <Select
                   className="input-base"
                   style={{
                     background: 'hsl(var(--muted) / 0.5)',
@@ -726,7 +712,7 @@ export default function FinanceiroClassesPage() {
                   <option value="despesa" style={{ background: 'hsl(var(--card))' }}>
                     Despesa
                   </option>
-                </select>
+                </Select>
               </div>
               <div>
                 <label
@@ -740,7 +726,7 @@ export default function FinanceiroClassesPage() {
                 >
                   Natureza
                 </label>
-                <select
+                <Select
                   className="input-base"
                   style={{
                     background: 'hsl(var(--muted) / 0.5)',
@@ -760,7 +746,7 @@ export default function FinanceiroClassesPage() {
                   <option value="devedora" style={{ background: 'hsl(var(--card))' }}>
                     Devedora (Despesa)
                   </option>
-                </select>
+                </Select>
               </div>
             </div>
             <div style={{ display: 'flex', gap: '1.5rem' }}>
@@ -799,21 +785,12 @@ export default function FinanceiroClassesPage() {
                 Permite Lançamento
               </label>
             </div>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: '0.75rem',
-                marginTop: '0.5rem',
-              }}
-            >
-              <Button variant="outline" onClick={() => setModal(null)}>
-                Cancelar
-              </Button>
-              <Button variant="primary" onClick={handleSave}>
-                Salvar
-              </Button>
-            </div>
+            <FormActions
+              onCancel={() => setModal(null)}
+              onSubmit={handleSave}
+              loading={savingClass}
+              submitLabel="Salvar"
+            />
           </div>
         </Modal>
       )}

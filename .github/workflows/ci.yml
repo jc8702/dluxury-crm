@@ -12,18 +12,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Use Node.js 20
+      - name: Use Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
       - name: Run unit tests
-        run: npm test -- --run
-        continue-on-error: true
+        run: npx vitest run
         env:
           DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
           APP_JWT_SECRET: test-jwt-secret-32chars-minimum-for-ci
@@ -36,15 +41,23 @@ jobs:
   e2e:
     needs: lint-and-test
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL || secrets.DATABASE_URL }}
+      APP_JWT_SECRET: ${{ secrets.APP_JWT_SECRET || 'test-jwt-secret-32chars-minimum-for-ci' }}
+      APP_INIT_KEY: ${{ secrets.APP_INIT_KEY || 'test-init-key-32chars-minimum-for-ci' }}
+      PLAYWRIGHT_BASE_URL: http://localhost:5173
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '20', cache: 'npm' }
+        with: { node-version: '24', cache: 'npm' }
       - run: npm ci
       - run: npx playwright install chromium --with-deps
       - run: npm run build
-      - run: npx vite preview --port 5173 &
-      - run: npx wait-on http://localhost:5173 --timeout 30000
+      - name: Start API server
+        run: npm run dev:api &
+      - name: Start front (preview)
+        run: npm run preview -- --port 5173 &
+      - run: npx wait-on http://localhost:3000 http://localhost:5173 --timeout 60000
       - run: npx playwright test tests/e2e/tenant-isolation.spec.ts --reporter=line
       - uses: actions/upload-artifact@v4
         if: failure()

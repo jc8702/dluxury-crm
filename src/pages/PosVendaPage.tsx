@@ -1,15 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
-import {
-  HeartHandshake,
-  Plus,
-  Clock,
-  CheckCircle,
-  AlertTriangle,
-  Loader2,
-  Save,
-} from 'lucide-react';
+import { HeartHandshake, Plus, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { api } from '../lib/api';
-import { Button, Card } from '../components/ui';
+import { Button, Card, FormActions } from '../components/ui';
 import { CardBody as CardContent } from '../components/ui';
 import {
   Input,
@@ -332,19 +324,11 @@ const PosVendaPage: React.FC = () => {
             />
           </div>
 
-          <div className="flex gap-4 mt-4">
-            <Button type="submit" className="flex-1" disabled={saving}>
-              {saving ? (
-                <Loader2 className="animate-spin mr-2" size={20} />
-              ) : (
-                <Save className="mr-2" size={20} />
-              )}
-              Abrir Chamado
-            </Button>
-            <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>
-              Cancelar
-            </Button>
-          </div>
+          <FormActions
+            onCancel={() => setIsModalOpen(false)}
+            loading={saving}
+            submitLabel="Abrir Chamado"
+          />
         </form>
       </Modal>
     </div>

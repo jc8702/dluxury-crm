@@ -15,6 +15,7 @@ import {
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
 import type { ExtratoPayload } from '../../modules/financeiro/domain/types';
+import { Select } from '../ui';
 
 interface Props {
   showExtrato: boolean;
@@ -132,7 +133,7 @@ export function ContasExtratoModal({
                 FLUXO
               </label>
               <div className="relative">
-                <select
+                <Select
                   className="w-full bg-background border border-border rounded-2xl px-6 py-4 text-sm font-black italic appearance-none focus:outline-none focus:border-primary/50 uppercase"
                   value={filtroTipo}
                   onChange={(e) => onFiltroTipoChange(e.target.value as any)}
@@ -140,7 +141,7 @@ export function ContasExtratoModal({
                   <option value="todos">TODOS OS LANÇAMENTOS</option>
                   <option value="entrada">ENTRADAS (+)</option>
                   <option value="saida">SAÍDAS (-)</option>
-                </select>
+                </Select>
                 <Filter className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-50 pointer-events-none" />
               </div>
             </div>
@@ -232,7 +233,9 @@ export function ContasExtratoModal({
                           </td>
                           <td className="px-8 py-5">
                             <div className="flex justify-center">
-                              <button
+                              <Button
+                                variant="plain"
+                                size="plain"
                                 onClick={() => {
                                   api.financeiro.conferencia
                                     .toggle({ id: m.id, origem: m.origem, conferido: !m.conferido })
@@ -251,7 +254,7 @@ export function ContasExtratoModal({
                                 ) : (
                                   <ChevronRight className="w-5 h-5 opacity-0 group-hover/check:opacity-100 transition-opacity" />
                                 )}
-                              </button>
+                              </Button>
                             </div>
                           </td>
                         </tr>

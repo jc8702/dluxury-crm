@@ -2,6 +2,7 @@ import { Modal, Button, Input } from '../common';
 import { ChevronRight } from 'lucide-react';
 import type { ContaInterna, TipoContaInterna } from '../../modules/financeiro/domain/types';
 import type { ContaForm } from '../../hooks/financeiro/useContasHook';
+import { Select } from '../ui';
 
 interface Props {
   isOpen: boolean;
@@ -40,7 +41,7 @@ export function ContasFormModal({ isOpen, editing, form, onClose, onFormChange, 
               TIPO DE ATIVO
             </label>
             <div className="relative">
-              <select
+              <Select
                 className="w-full bg-background border border-border rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all appearance-none font-bold"
                 value={form.tipo}
                 onChange={(e) => set('tipo', e.target.value as TipoContaInterna)}
@@ -49,7 +50,7 @@ export function ContasFormModal({ isOpen, editing, form, onClose, onFormChange, 
                 <option value="poupanca">POUPANÇA</option>
                 <option value="caixa">CAIXA INTERNO</option>
                 <option value="aplicacao">APLICAÇÃO/INVESTIMENTO</option>
-              </select>
+              </Select>
               <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 rotate-90 text-primary pointer-events-none" />
             </div>
           </div>

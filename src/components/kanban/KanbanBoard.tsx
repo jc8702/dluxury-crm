@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Button } from '../ui';
 
 export interface KanbanItem {
   id: string;
@@ -189,7 +190,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                     {(onEdit || onDelete) && (
                       <div className="mt-3 pt-2 border-t border-[var(--ui-border)] flex justify-end gap-3">
                         {onEdit && (
-                          <button
+                          <Button
+                            variant="plain"
+                            size="plain"
                             onClick={(e) => {
                               e.stopPropagation();
                               onEdit(item);
@@ -197,10 +200,12 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                             className="bg-transparent border-none text-[var(--ui-color-primary)] text-xs font-bold cursor-pointer px-1.5 py-0.5 rounded opacity-80 hover:opacity-100 hover:bg-[var(--ui-surface-hover)] transition-all"
                           >
                             Editar
-                          </button>
+                          </Button>
                         )}
                         {onDelete && (
-                          <button
+                          <Button
+                            variant="plain"
+                            size="plain"
                             onClick={(e) => {
                               e.stopPropagation();
                               if (confirm('Tem certeza que deseja excluir este item?')) {
@@ -210,7 +215,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                             className="bg-transparent border-none text-[var(--ui-color-danger)] text-xs font-bold cursor-pointer px-1.5 py-0.5 rounded opacity-80 hover:opacity-100 hover:bg-[var(--ui-color-danger-soft)] transition-all"
                           >
                             Excluir
-                          </button>
+                          </Button>
                         )}
                       </div>
                     )}

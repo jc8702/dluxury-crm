@@ -12,7 +12,6 @@ import {
   Printer,
   CheckSquare,
   Layers,
-  ArrowLeft,
   FileText,
   X,
 } from 'lucide-react';
@@ -20,6 +19,7 @@ import { TableSkeleton } from '../common/Skeleton';
 import FinanceiroTitulosPagarWizard from '../../pages/FinanceiroTitulosPagarWizard';
 import ReciboModal from '../ReciboModal';
 import type { Titulo, ContaInterna } from '../../modules/financeiro/domain/types';
+import { BackButton } from '../ui';
 
 interface Props {
   rows: any[];
@@ -108,13 +108,10 @@ export function TitulosPagarListView({
 }: Props) {
   return (
     <div className="p-8 max-w-[1600px] mx-auto min-h-screen">
-      <Button
-        variant="ghost"
+      <BackButton
+        label="Voltar ao Painel Financeiro"
         onClick={() => (window.location.hash = '#/financeiro')}
-        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 p-0 h-auto hover:bg-transparent"
-      >
-        <ArrowLeft size={16} /> Voltar ao Painel Financeiro
-      </Button>
+      />
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
         <div>
@@ -221,12 +218,14 @@ export function TitulosPagarListView({
               <tr className="bg-muted/30 border-b border-border">
                 <th className="w-12 px-6 py-5">
                   <div className="flex items-center justify-center">
-                    <button
+                    <Button
+                      variant="plain"
+                      size="plain"
                       onClick={onSelectAll}
                       className="text-muted-foreground hover:text-primary transition-colors"
                     >
                       <CheckSquare className="w-4 h-4" />
-                    </button>
+                    </Button>
                   </div>
                 </th>
                 <th className="text-left px-4 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground italic">
@@ -340,7 +339,9 @@ export function TitulosPagarListView({
                             >
                               <td className="px-6 py-4">
                                 <div className="flex items-center justify-center">
-                                  <button
+                                  <Button
+                                    variant="plain"
+                                    size="plain"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       onToggleSelect(r.id);
@@ -348,7 +349,7 @@ export function TitulosPagarListView({
                                     className={`w-5 h-5 rounded border transition-all flex items-center justify-center ${isSelected ? 'bg-primary border-primary text-primary-foreground' : 'border-border text-transparent hover:border-primary/50'}`}
                                   >
                                     <CheckSquare className="w-3.5 h-3.5" />
-                                  </button>
+                                  </Button>
                                 </div>
                               </td>
                               <td className="px-4 py-4 font-mono text-xs font-black text-[hsl(var(--destructive))] tracking-widest italic">
@@ -482,12 +483,14 @@ export function TitulosPagarListView({
               <h2 className="text-lg font-bold text-foreground">
                 Novo Lançamento - Contas a Pagar
               </h2>
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 onClick={onWizardClose}
                 className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
               >
                 <X size={20} />
-              </button>
+              </Button>
             </div>
             <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-muted/30">
               <FinanceiroTitulosPagarWizard

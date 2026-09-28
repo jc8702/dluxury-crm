@@ -1,13 +1,14 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
-import { Settings2, Plus, Zap, Loader2, Save, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Settings2, Plus, Zap, X } from 'lucide-react';
 import { evaluate } from 'mathjs';
 import { useToast } from '../../context/ToastContext';
 import { api } from '../../lib/api';
-import { Button, Card } from '../../components/ui';
+import { Button, Card, FormActions } from '../../components/ui';
 import { CardBody as CardContent } from '../../components/ui';
 import { Modal, Input, CardSkeleton } from '../../components/common';
 import DataTable from '../common/DataTable';
 import { SKUAutocomplete } from '../../modules/quotations/components/SKUAutocomplete';
+import { Select } from '../ui';
 
 const EngineeringPage: React.FC = () => {
   const { error: toastError } = useToast();
@@ -531,7 +532,7 @@ const EngineeringPage: React.FC = () => {
                       <label className="mb-1.5 block text-xs font-medium text-foreground/80">
                         Sentido do Veio
                       </label>
-                      <select
+                      <Select
                         className="flex h-10 w-full rounded-xl border border-border bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                         value={comp.sentido_veio || 'longitudinal'}
                         onChange={(e) => updateComponent(comp.id, { sentido_veio: e.target.value })}
@@ -539,7 +540,7 @@ const EngineeringPage: React.FC = () => {
                         <option value="longitudinal">Longitudinal</option>
                         <option value="transversal">Transversal</option>
                         <option value="sem_sentido">Sem Sentido</option>
-                      </select>
+                      </Select>
                     </div>
                   </div>
 
@@ -600,19 +601,11 @@ const EngineeringPage: React.FC = () => {
             </div>
           )}
 
-          <div className="flex gap-4 mt-4">
-            <Button type="submit" className="flex-1" disabled={saving}>
-              {saving ? (
-                <Loader2 className="animate-spin mr-2" size={20} />
-              ) : (
-                <Save className="mr-2" size={20} />
-              )}
-              Salvar Módulo
-            </Button>
-            <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>
-              Cancelar
-            </Button>
-          </div>
+          <FormActions
+            onCancel={() => setIsModalOpen(false)}
+            loading={saving}
+            submitLabel="Salvar Módulo"
+          />
         </form>
       </Modal>
     </div>

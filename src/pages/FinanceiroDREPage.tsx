@@ -8,10 +8,11 @@ import {
   TrendingDown,
   Minus,
   Calendar,
-  ArrowLeft,
 } from 'lucide-react';
 import { Button } from '../components/ui';
 
+import { Input } from '../components/ui';
+import { BackButton } from '../components/ui';
 const fmt = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const fmtPct = (v: number) => `${(v || 0).toFixed(1)}%`;
@@ -165,13 +166,10 @@ export default function FinanceiroDREPage() {
 
   return (
     <div className="flex flex-col gap-4 max-w-[1440px] mx-auto w-full animate-fade-in">
-      <Button
-        variant="ghost"
+      <BackButton
+        label="Voltar ao Painel Financeiro"
         onClick={() => (window.location.hash = '#/financeiro')}
-        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 p-0 h-auto hover:bg-transparent"
-      >
-        <ArrowLeft size={16} /> Voltar ao Painel Financeiro
-      </Button>
+      />
 
       {/* Header — responsivo, alinhado ao padrão 1440px */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
@@ -208,7 +206,7 @@ export default function FinanceiroDREPage() {
 
           {/* Filtro de Período Industrial — colapsa em mobile */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 glass p-1 rounded-2xl border border-border w-full sm:w-auto">
-            <input
+            <Input
               type="date"
               aria-label="Data início DRE"
               className="bg-transparent border-none text-sm font-semibold text-foreground px-3 py-2 focus:ring-0 focus:border-primary focus:outline-none w-full sm:w-40 rounded-lg focus-visible:ring-2 focus-visible:ring-primary/20"
@@ -218,7 +216,7 @@ export default function FinanceiroDREPage() {
             <span className="hidden sm:inline text-sm font-semibold text-[var(--ui-text-secondary)] opacity-60">
               até
             </span>
-            <input
+            <Input
               type="date"
               aria-label="Data fim DRE"
               className="bg-transparent border-none text-sm font-semibold text-foreground px-3 py-2 focus:ring-0 focus:border-primary focus:outline-none w-full sm:w-40 rounded-lg focus-visible:ring-2 focus-visible:ring-primary/20"

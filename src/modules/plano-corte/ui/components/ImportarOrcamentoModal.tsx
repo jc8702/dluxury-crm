@@ -3,15 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import { Search, FileText, CheckCircle, X, Loader2, ArrowRight } from 'lucide-react';
 import { api } from '@/lib/api';
-// @todo migrar para Modal de @/components/ui (trocar isOpen → open)
 import { Modal } from '../../../../components/common';
+import { useToast } from '@/context/ToastContext';
 
+import { Input } from '../../../../components/ui';
 interface ImportarOrcamentoModalProps {
   onImportar: (chapasImportadas: any[]) => void;
   onFechar: () => void;
 }
 
 export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamentoModalProps) {
+  const { error: toastError } = useToast();
   const [quotations, setOrcamentos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
@@ -46,7 +48,7 @@ export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamen
     try {
       const orcDet = await api.quotations.get(orcamentoId);
       if (!orcDet || !orcDet.itens || orcDet.itens.length === 0) {
-        alert('Este orçamento não contém itens ou peças cadastradas.');
+        toastError('Orçamento sem itens', 'Este orçamento não contém itens ou peças cadastradas.');
         setImporting(false);
         return;
       }
@@ -71,7 +73,10 @@ export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamen
       });
 
       if (itensMdf.length === 0) {
-        alert('Não foram encontradas peças de MDF com dimensões válidas neste orçamento.');
+        toastError(
+          'Sem peças de MDF',
+          'Não foram encontradas peças de MDF com dimensões válidas neste orçamento.',
+        );
         setImporting(false);
         return;
       }
@@ -139,7 +144,10 @@ export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamen
       onFechar();
     } catch (err) {
       console.error('Erro ao importar orçamento:', err);
-      alert('Ocorreu um erro ao carregar e processar os itens do orçamento.');
+      toastError(
+        'Erro ao importar',
+        'Ocorreu um erro ao carregar e processar os itens do orçamento.',
+      );
     } finally {
       setImporting(false);
     }
@@ -160,7 +168,7 @@ export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamen
             className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors"
             size={18}
           />
-          <input
+          <Input
             type="text"
             placeholder="Buscar por número ou cliente..."
             value={filtroTexto}

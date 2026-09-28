@@ -104,3 +104,7 @@ audit-report.json
 playwright-*.txt
 apresentacao-canvas*.html
 apresentacao-*.html
+
+# Screenshots de debug (E2E/inspecao manual)
+screenshot-*.png
+trace-*.png

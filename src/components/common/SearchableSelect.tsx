@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Button } from '../ui';
 
 interface Item {
   id: string;
@@ -60,7 +61,9 @@ const SearchableSelect: React.FC<{
           }}
           style={{ width: '100%', minHeight: 40, fontSize: '0.8rem' }}
         />
-        <button
+        <Button
+          variant="plain"
+          size="plain"
           type="button"
           onClick={() => {
             setOpen((s) => !s);
@@ -70,7 +73,7 @@ const SearchableSelect: React.FC<{
           style={{ padding: '0.4rem 0.6rem', minHeight: 40, fontSize: '0.75rem' }}
         >
           {open ? '▲' : '▼'}
-        </button>
+        </Button>
       </div>
 
       {open && (

@@ -1,6 +1,7 @@
 ﻿import React from 'react';
 import { Modal } from '@/components/ui';
 import { Printer, X } from 'lucide-react';
+import { Button } from './ui';
 
 interface ReciboModalProps {
   isOpen: boolean;
@@ -177,12 +178,12 @@ const ReciboModal: React.FC<ReciboModalProps> = ({
       </div>
 
       <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem' }}>
-        <button className="btn btn-outline" onClick={onClose}>
+        <Button variant="plain" size="plain" className="btn btn-outline" onClick={onClose}>
           <X /> FECHAR
-        </button>
-        <button className="btn btn-primary" onClick={handlePrint}>
+        </Button>
+        <Button variant="plain" size="plain" className="btn btn-primary" onClick={handlePrint}>
           <Printer /> IMPRIMIR RECIBO
-        </button>
+        </Button>
       </div>
     </Modal>
   );

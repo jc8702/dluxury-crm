@@ -17,7 +17,10 @@ import {
   DollarSign,
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
+import { Select } from '../components/ui';
 
+import { Input } from '../components/ui';
+import { Button, FormActions } from '../components/ui';
 interface Tenant {
   id: string;
   nome: string;
@@ -304,7 +307,7 @@ export default function SaaSAdminPage() {
         <div className="p-4 border-b border-border flex flex-col md:flex-row items-center gap-4 bg-muted/30">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <input
+            <Input
               type="text"
               placeholder="Buscar por empresa, subdomínio ou domínio..."
               value={search}
@@ -314,7 +317,7 @@ export default function SaaSAdminPage() {
           </div>
 
           <div className="flex items-center gap-2 w-full md:w-auto">
-            <select
+            <Select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               className="flex-1 md:flex-initial bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
@@ -323,9 +326,9 @@ export default function SaaSAdminPage() {
               <option value="ativo">Ativo</option>
               <option value="inativo">Inativo</option>
               <option value="pendente">Pendente</option>
-            </select>
+            </Select>
 
-            <select
+            <Select
               value={filterPlano}
               onChange={(e) => setFilterPlano(e.target.value)}
               className="flex-1 md:flex-initial bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
@@ -334,7 +337,7 @@ export default function SaaSAdminPage() {
               <option value="basic">Plano Basic</option>
               <option value="pro">Plano Pro</option>
               <option value="enterprise">Plano Enterprise</option>
-            </select>
+            </Select>
           </div>
         </div>
 
@@ -452,20 +455,24 @@ export default function SaaSAdminPage() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button
+                          <Button
+                            variant="plain"
+                            size="plain"
                             onClick={() => handleOpenUser(tenant)}
                             className="p-1.5 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors"
                             title="Criar usuário para este tenant"
                           >
                             <UserPlus className="h-4 w-4" />
-                          </button>
-                          <button
+                          </Button>
+                          <Button
+                            variant="plain"
+                            size="plain"
                             onClick={() => handleOpenEdit(tenant)}
                             className="p-1.5 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors"
                             title="Editar plano/assinatura"
                           >
                             <Edit3 className="h-4 w-4" />
-                          </button>
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -486,12 +493,14 @@ export default function SaaSAdminPage() {
                 <CreditCard className="h-5 w-5 text-primary" />
                 Editar Assinatura: {selectedTenant.nome}
               </h3>
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 onClick={() => setIsEditModalOpen(false)}
                 className="p-1 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted"
               >
                 <X className="h-5 w-5" />
-              </button>
+              </Button>
             </div>
 
             <form onSubmit={handleSaveEdit} className="p-5 space-y-4">
@@ -499,7 +508,7 @@ export default function SaaSAdminPage() {
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Plano Contratado
                 </label>
-                <select
+                <Select
                   value={editPlano}
                   onChange={(e) => setEditPlano(e.target.value as any)}
                   className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
@@ -507,14 +516,14 @@ export default function SaaSAdminPage() {
                   <option value="basic">Basic (R$ 97,00)</option>
                   <option value="pro">Pro (R$ 197,00)</option>
                   <option value="enterprise">Enterprise (R$ 397,00)</option>
-                </select>
+                </Select>
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Status da Conta
                 </label>
-                <select
+                <Select
                   value={editStatus}
                   onChange={(e) => setEditStatus(e.target.value as any)}
                   className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
@@ -522,7 +531,7 @@ export default function SaaSAdminPage() {
                   <option value="ativo">Ativo</option>
                   <option value="inativo">Inativo</option>
                   <option value="pendente">Pendente / Overdue</option>
-                </select>
+                </Select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -530,7 +539,7 @@ export default function SaaSAdminPage() {
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Valor Mensal (R$)
                   </label>
-                  <input
+                  <Input
                     type="number"
                     step="0.01"
                     value={editValor}
@@ -544,7 +553,7 @@ export default function SaaSAdminPage() {
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Dia do Vencimento
                   </label>
-                  <input
+                  <Input
                     type="number"
                     min="1"
                     max="28"
@@ -560,7 +569,7 @@ export default function SaaSAdminPage() {
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Data de Vencimento do Acesso
                 </label>
-                <input
+                <Input
                   type="date"
                   value={editVencimento}
                   onChange={(e) => setEditVencimento(e.target.value)}
@@ -571,29 +580,11 @@ export default function SaaSAdminPage() {
                 </span>
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-border mt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsEditModalOpen(false)}
-                  className="px-4 py-2 border border-border text-sm text-muted-foreground rounded-lg hover:bg-muted"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={submittingEdit}
-                  className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/95 flex items-center gap-2"
-                >
-                  {submittingEdit ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                      Salvando...
-                    </>
-                  ) : (
-                    'Salvar Alterações'
-                  )}
-                </button>
-              </div>
+              <FormActions
+                onCancel={() => setIsEditModalOpen(false)}
+                loading={submittingEdit}
+                submitLabel="Salvar Alterações"
+              />
             </form>
           </div>
         </div>
@@ -608,12 +599,14 @@ export default function SaaSAdminPage() {
                 <UserPlus className="h-5 w-5 text-primary" />
                 Criar Usuário: {selectedTenant.nome}
               </h3>
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 onClick={() => setIsUserModalOpen(false)}
                 className="p-1 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted"
               >
                 <X className="h-5 w-5" />
-              </button>
+              </Button>
             </div>
 
             <form onSubmit={handleCreateUser} className="p-5 space-y-4">
@@ -621,7 +614,7 @@ export default function SaaSAdminPage() {
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Nome Completo
                 </label>
-                <input
+                <Input
                   type="text"
                   placeholder="Ex: João da Silva"
                   value={userName}
@@ -635,7 +628,7 @@ export default function SaaSAdminPage() {
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   E-mail
                 </label>
-                <input
+                <Input
                   type="email"
                   placeholder="Ex: joao@empresa.com"
                   value={userEmail}
@@ -649,7 +642,7 @@ export default function SaaSAdminPage() {
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Nível de Acesso (Role)
                 </label>
-                <select
+                <Select
                   value={userRole}
                   onChange={(e) => setUserRole(e.target.value)}
                   className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
@@ -658,14 +651,14 @@ export default function SaaSAdminPage() {
                   <option value="producao">Gerente de Produção</option>
                   <option value="vendedor">Vendedor / Comercial</option>
                   <option value="financeiro">Analista Financeiro</option>
-                </select>
+                </Select>
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Senha Provisória
                 </label>
-                <input
+                <Input
                   type="password"
                   placeholder="Mínimo 8 caracteres"
                   value={userPassword}
@@ -676,29 +669,11 @@ export default function SaaSAdminPage() {
                 />
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-border mt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsUserModalOpen(false)}
-                  className="px-4 py-2 border border-border text-sm text-muted-foreground rounded-lg hover:bg-muted"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={submittingUser}
-                  className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/95 flex items-center gap-2"
-                >
-                  {submittingUser ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                      Criando...
-                    </>
-                  ) : (
-                    'Criar Usuário'
-                  )}
-                </button>
-              </div>
+              <FormActions
+                onCancel={() => setIsUserModalOpen(false)}
+                loading={submittingUser}
+                submitLabel="Criar Usuário"
+              />
             </form>
           </div>
         </div>

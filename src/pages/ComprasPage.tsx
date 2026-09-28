@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import SearchableSelect from '../components/common/SearchableSelect';
 import { Plus, ShoppingCart, Trash2, Eye, AlertCircle, History } from 'lucide-react';
 import { api } from '../lib/api';
@@ -6,9 +6,10 @@ import { api } from '../lib/api';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
 import { CardSkeleton } from '../components/common/Skeleton';
-import { Button, Card } from '../components/ui';
+import { Button, Card, FormActions } from '../components/ui';
 import { CardBody as CardContent } from '../components/ui';
 import { Input, Modal, Badge } from '../components/common';
+import { Select } from '../components/ui';
 
 const ComprasPage: React.FC = () => {
   const [pedidos, setPedidos] = useState<any[]>([]);
@@ -305,6 +306,8 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
   );
   const [fornecedores, setFornecedores] = useState<any[]>([]);
   const [materiais, setMateriais] = useState<any[]>([]);
+  const [savingPedido, setSavingPedido] = useState(false);
+  const [deletingPedido, setDeletingPedido] = useState(false);
 
   const [newItem, setNewItem] = useState({
     material_id: '',
@@ -378,6 +381,7 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
   };
 
   const handleSave = async () => {
+    setSavingPedido(true);
     try {
       if (pedido?.id) {
         await api.compras.updatePedido(pedido.id, formData);
@@ -388,6 +392,8 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
       onSave();
     } catch (error: any) {
       toastError(error.message || 'Erro ao salvar pedido');
+    } finally {
+      setSavingPedido(false);
     }
   };
 
@@ -398,6 +404,7 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
       description: 'Deseja excluir este Pedido de Compra?',
     });
     if (!isConfirmed) return;
+    setDeletingPedido(true);
     try {
       await fetch(`/api/compras?id=${encodeURIComponent(pedido.id)}&type=pedidos`, {
         method: 'DELETE',
@@ -406,6 +413,8 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
       onSave();
     } catch (e: any) {
       toastError('Erro ao excluir pedido: ' + e.message);
+    } finally {
+      setDeletingPedido(false);
     }
   }, [pedido, onSave, confirmAction, toastError, success]);
 
@@ -420,7 +429,7 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-foreground">Fornecedor</label>
-            <select
+            <Select
               value={formData.fornecedor_id}
               onChange={(e) => setFormData({ ...formData, fornecedor_id: e.target.value })}
               className="w-full bg-background border border-border rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 text-foreground"
@@ -431,11 +440,11 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
                   {f.nome}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-foreground">Status</label>
-            <select
+            <Select
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
               className="w-full bg-background border border-border rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 text-foreground"
@@ -444,7 +453,7 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
               <option value="enviado">Enviado</option>
               <option value="confirmado">Confirmado</option>
               <option value="cancelado">Cancelado</option>
-            </select>
+            </Select>
           </div>
         </div>
 
@@ -531,7 +540,7 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
                         </td>
                         <td className="p-3 text-center text-foreground">
                           <div className="flex items-center justify-center gap-1">
-                            <input
+                            <Input
                               type="number"
                               value={itm.quantidade_pedida}
                               onChange={(e) =>
@@ -549,7 +558,7 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
                         <td className="p-3 text-right">
                           <div className="flex items-center justify-end gap-1">
                             <span className="text-xs text-muted-foreground">R$</span>
-                            <input
+                            <Input
                               type="number"
                               value={itm.preco_unitario}
                               onChange={(e) =>
@@ -597,23 +606,20 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
           </Card>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-border">
-          <div>
-            {pedido?.id && (
-              <Button variant="danger" onClick={handleDeletePedido}>
+        <FormActions
+          className="flex-col sm:flex-row justify-between gap-4 pt-4 border-t border-border mt-0"
+          left={
+            pedido?.id ? (
+              <Button variant="danger" onClick={handleDeletePedido} isLoading={deletingPedido}>
                 Excluir Pedido
               </Button>
-            )}
-          </div>
-          <div className="flex gap-2 w-full sm:w-auto justify-end">
-            <Button variant="secondary" onClick={onClose} className="w-full sm:w-auto">
-              Cancelar
-            </Button>
-            <Button variant="primary" onClick={handleSave} className="w-full sm:w-auto">
-              Salvar Pedido
-            </Button>
-          </div>
-        </div>
+            ) : null
+          }
+          onCancel={onClose}
+          onSubmit={handleSave}
+          loading={savingPedido}
+          submitLabel="Salvar Pedido"
+        />
         {ConfirmDialogElement}
       </div>
     </Modal>

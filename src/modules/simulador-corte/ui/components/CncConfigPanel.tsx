@@ -2,6 +2,8 @@ import React from 'react';
 import { Cpu, Wrench, Shield, Gauge, ArrowUpDown, Plus, Trash2 } from 'lucide-react';
 import type { CncConfig, CollisionPolicy, ClampPosition } from '../../domain/types';
 
+import { Input } from '../../../../components/ui';
+import { Button } from '../../../../components/ui';
 interface CncConfigPanelProps {
   config: CncConfig;
   onChange: (config: CncConfig) => void;
@@ -215,7 +217,9 @@ export default function CncConfigPanel({ config, onChange }: CncConfigPanelProps
           ].map((opt) => {
             const isSelected = machine.collisionPolicy === opt.value;
             return (
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 key={opt.value}
                 type="button"
                 onClick={() => updateMachine('collisionPolicy', opt.value)}
@@ -236,7 +240,7 @@ export default function CncConfigPanel({ config, onChange }: CncConfigPanelProps
                   <span className="text-sm font-bold block">{opt.label}</span>
                   <p className="text-muted-foreground text-sm leading-tight mt-0.5">{opt.desc}</p>
                 </div>
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -254,7 +258,9 @@ export default function CncConfigPanel({ config, onChange }: CncConfigPanelProps
                 <span className="text-muted-foreground text-sm font-bold">
                   {clamp.id.toUpperCase()}
                 </span>
-                <button
+                <Button
+                  variant="plain"
+                  size="plain"
                   type="button"
                   onClick={() => {
                     const novosClamps = config.fixture.clamps.filter((_, i) => i !== idx);
@@ -263,7 +269,7 @@ export default function CncConfigPanel({ config, onChange }: CncConfigPanelProps
                   className="text-muted-foreground hover:text-destructive transition-colors"
                 >
                   <Trash2 size={10} />
-                </button>
+                </Button>
               </div>
               <div className="grid grid-cols-4 gap-1">
                 <ClampField
@@ -318,7 +324,9 @@ export default function CncConfigPanel({ config, onChange }: CncConfigPanelProps
             </div>
           ))}
         </div>
-        <button
+        <Button
+          variant="plain"
+          size="plain"
           type="button"
           onClick={() => {
             const nextId = config.fixture.clamps.length + 1;
@@ -334,7 +342,7 @@ export default function CncConfigPanel({ config, onChange }: CncConfigPanelProps
           className="w-full mt-1.5 flex items-center justify-center gap-1 bg-muted hover:bg-muted text-accent text-sm font-bold py-1.5 rounded transition-all"
         >
           <Plus size={10} /> ADICIONAR GARRA
-        </button>
+        </Button>
       </div>
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
@@ -362,7 +370,7 @@ function ClampField({
   return (
     <div>
       <label className="text-muted-foreground text-xs block">{label}</label>
-      <input
+      <Input
         type="number"
         value={value}
         min={min}
@@ -399,7 +407,7 @@ function ParamField({
     <div className="flex items-center justify-between bg-background border border-border rounded px-2 py-1">
       <label className="text-muted-foreground font-medium">{label}</label>
       <div className="flex items-center gap-1">
-        <input
+        <Input
           type="number"
           value={value}
           min={min}

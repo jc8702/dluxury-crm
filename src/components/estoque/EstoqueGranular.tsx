@@ -15,7 +15,10 @@ import {
 } from 'lucide-react';
 import { inventoryService } from '../../services/inventoryService';
 import type { EstoqueGranularItem, AlertaEstoque } from '../../services/inventoryService';
+import { Select } from '../ui';
 
+import { Input } from '../ui';
+import { Button } from '../ui';
 export default function EstoqueGranular() {
   const [items, setItems] = useState<EstoqueGranularItem[]>([]);
   const [alertas, setAlertas] = useState<AlertaEstoque[]>([]);
@@ -237,7 +240,7 @@ export default function EstoqueGranular() {
       <div className="bg-card border border-border rounded-lg p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:w-96">
           <Search className="absolute left-3 top-2.5 text-muted-foreground" size={18} />
-          <input
+          <Input
             type="text"
             placeholder="Buscar por SKU ou Descrição..."
             value={busca}
@@ -248,7 +251,7 @@ export default function EstoqueGranular() {
         </div>
 
         <div className="flex gap-3 w-full md:w-auto">
-          <select
+          <Select
             value={filtroStatus}
             onChange={(e) => setFiltroStatus(e.target.value)}
             className="flex-1 md:flex-none px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none"
@@ -257,23 +260,27 @@ export default function EstoqueGranular() {
             <option value="critica">Critica (Falta)</option>
             <option value="alerta">Alerta (Mínimo)</option>
             <option value="minimo">Mínimo / Crítico</option>
-          </select>
+          </Select>
 
-          <button
+          <Button
+            variant="outline"
+            size="plain"
             onClick={carregarEstoque}
             className="p-2.5 bg-background border border-border rounded-lg text-muted-foreground hover:text-foreground hover:border-primary transition"
             title="Atualizar dados"
           >
             <RefreshCw size={18} />
-          </button>
+          </Button>
 
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             onClick={() => setShowMovimentarModal(true)}
             className="flex items-center justify-center gap-1.5 px-4 py-2 bg-foreground text-background hover:bg-foreground/90 font-semibold rounded-lg transition"
           >
             <Plus size={18} />
             Movimentar
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -374,12 +381,14 @@ export default function EstoqueGranular() {
       {itemSelecionado && (
         <div className="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50 animate-fadeIn">
           <div className="bg-background border border-border rounded-xl p-6 max-w-2xl w-full relative">
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               onClick={() => setItemSelecionado(null)}
               className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
             >
               ✕
-            </button>
+            </Button>
 
             <h2 className="text-xl font-bold text-foreground font-mono">
               {itemSelecionado.sku_codigo}
@@ -512,13 +521,15 @@ export default function EstoqueGranular() {
             onSubmit={handleSubmeterMovimentacao}
             className="bg-background border border-border rounded-xl p-6 max-w-md w-full relative"
           >
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               type="button"
               onClick={() => setShowMovimentarModal(false)}
               className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
             >
               ✕
-            </button>
+            </Button>
 
             <h2 className="text-xl font-bold text-foreground mb-6">Registrar Movimentação</h2>
 
@@ -533,7 +544,7 @@ export default function EstoqueGranular() {
                 <label className="block mb-1.5 font-semibold text-muted-foreground">
                   SKU do Item:
                 </label>
-                <select
+                <Select
                   value={movItem.sku_codigo}
                   onChange={(e) => setMovItem({ ...movItem, sku_codigo: e.target.value })}
                   required
@@ -545,7 +556,7 @@ export default function EstoqueGranular() {
                       {i.sku_codigo} - {i.descricao}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -553,7 +564,7 @@ export default function EstoqueGranular() {
                   <label className="block mb-1.5 font-semibold text-muted-foreground">
                     Operação:
                   </label>
-                  <select
+                  <Select
                     value={movItem.tipo_movimento}
                     onChange={(e: any) =>
                       setMovItem({ ...movItem, tipo_movimento: e.target.value })
@@ -567,14 +578,14 @@ export default function EstoqueGranular() {
                     <option value="rejeicao_qc">Rejeição QC</option>
                     <option value="ajuste_entrada">Ajuste de Entrada (+)</option>
                     <option value="ajuste_saida">Ajuste de Saída (-)</option>
-                  </select>
+                  </Select>
                 </div>
 
                 <div>
                   <label className="block mb-1.5 font-semibold text-muted-foreground">
                     Status Alvo:
                   </label>
-                  <select
+                  <Select
                     value={movItem.status_alvo}
                     onChange={(e: any) => setMovItem({ ...movItem, status_alvo: e.target.value })}
                     className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground focus:outline-none"
@@ -584,7 +595,7 @@ export default function EstoqueGranular() {
                     <option value="provisionado">Provisionado</option>
                     <option value="defeituoso">Defeituoso</option>
                     <option value="vencido">Vencido</option>
-                  </select>
+                  </Select>
                 </div>
               </div>
 
@@ -592,7 +603,7 @@ export default function EstoqueGranular() {
                 <label className="block mb-1.5 font-semibold text-muted-foreground">
                   Quantidade:
                 </label>
-                <input
+                <Input
                   type="number"
                   min="1"
                   value={movItem.quantidade}
@@ -616,13 +627,15 @@ export default function EstoqueGranular() {
               </div>
             </div>
 
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               type="submit"
               disabled={submittingMov}
               className="w-full py-2.5 mt-6 bg-foreground text-background hover:bg-foreground/90 font-semibold rounded-lg transition disabled:opacity-50"
             >
               {submittingMov ? 'Processando...' : 'Confirmar Lançamento'}
-            </button>
+            </Button>
           </form>
         </div>
       )}

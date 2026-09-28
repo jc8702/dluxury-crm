@@ -9,11 +9,12 @@ on:
 jobs:
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      APP_JWT_SECRET: ${{ secrets.APP_JWT_SECRET }}
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL || secrets.DATABASE_URL }}
+      APP_JWT_SECRET: ${{ secrets.APP_JWT_SECRET || 'test-jwt-secret-32chars-minimum-for-ci' }}
+      APP_INIT_KEY: ${{ secrets.APP_INIT_KEY || 'test-init-key-32chars-minimum-for-ci' }}
       PLAYWRIGHT_BASE_URL: http://localhost:5173
 
     steps:
@@ -21,7 +22,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
@@ -33,11 +34,14 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Start API server
+        run: npm run dev:api &
+
       - name: Start dev server
         run: npm run dev &
 
-      - name: Wait for server
-        run: npx wait-on http://localhost:5173 --timeout 30000
+      - name: Wait for servers
+        run: npx wait-on http://localhost:3000 http://localhost:5173 --timeout 60000
 
       - name: Run E2E tests
         run: npx playwright test

@@ -1,17 +1,10 @@
 ﻿import React, { useState, useRef } from 'react';
-import {
-  Upload,
-  RefreshCw,
-  CheckCircle,
-  XCircle,
-  Link,
-  AlertTriangle,
-  ArrowLeft,
-} from 'lucide-react';
+import { Upload, RefreshCw, CheckCircle, XCircle, Link, AlertTriangle } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { Button, Card, CardHeader, CardTitle } from '../components/ui';
 import { CardBody as CardContent } from '../components/ui';
 import { Badge } from '../components/common';
+import { BackButton } from '../components/ui';
 
 const fmt = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
@@ -206,23 +199,10 @@ export default function FinanceiroConciliacaoPage() {
       className="page-container anim-fade-in"
       style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}
     >
-      <Button
-        variant="ghost"
+      <BackButton
+        label="Voltar ao Painel Financeiro"
         onClick={() => (window.location.hash = '#/financeiro')}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          fontSize: '0.75rem',
-          color: 'hsl(var(--muted-foreground))',
-          marginBottom: '1rem',
-          padding: 0,
-          height: 'auto',
-          background: 'transparent',
-        }}
-      >
-        <ArrowLeft size={16} /> Voltar ao Painel Financeiro
-      </Button>
+      />
       {/* Header */}
       <div
         style={{
@@ -649,7 +629,9 @@ export default function FinanceiroConciliacaoPage() {
                                   txn.type === 'CREDIT' ? e.tipo === 'receber' : e.tipo === 'pagar',
                                 )
                                 .map((entry) => (
-                                  <button
+                                  <Button
+                                    variant="plain"
+                                    size="plain"
                                     key={entry.id}
                                     onClick={() => doManualMatch(txn.id, entry.id)}
                                     style={{
@@ -672,7 +654,7 @@ export default function FinanceiroConciliacaoPage() {
                                     >
                                       {fmt(entry.valor)} • {entry.data}
                                     </div>
-                                  </button>
+                                  </Button>
                                 ))}
                               {internals.filter((e) =>
                                 txn.type === 'CREDIT' ? e.tipo === 'receber' : e.tipo === 'pagar',

@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Card, CardHeader, CardTitle } from '../components/ui';
+import { Button, Card, CardHeader, CardTitle, FormActions } from '../components/ui';
 import { CardBody as CardContent } from '../components/ui';
 import { Modal, Input, Badge } from '../components/common';
-import { Plus, RefreshCw, Edit, DollarSign, ArrowLeft } from 'lucide-react';
+import { Plus, RefreshCw, Edit, DollarSign } from 'lucide-react';
 import { api } from '../lib/api';
 import { useToast } from '../context/ToastContext';
 import { TableSkeleton } from '../components/common/Skeleton';
+import { Select } from '../components/ui';
+import { BackButton } from '../components/ui';
 
 const FinanceiroFormasPage: React.FC = () => {
   const { success, error } = useToast();
@@ -86,23 +88,10 @@ const FinanceiroFormasPage: React.FC = () => {
 
   return (
     <div className="page-container anim-fade-in" style={{ padding: '1rem' }}>
-      <Button
-        variant="ghost"
+      <BackButton
+        label="Voltar ao Painel Financeiro"
         onClick={() => (window.location.hash = '#/financeiro')}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          fontSize: '0.75rem',
-          color: 'hsl(var(--muted-foreground))',
-          marginBottom: '1rem',
-          padding: 0,
-          height: 'auto',
-          background: 'transparent',
-        }}
-      >
-        <ArrowLeft size={16} /> Voltar ao Painel Financeiro
-      </Button>
+      />
       {/* Header */}
       <div
         style={{
@@ -343,7 +332,7 @@ const FinanceiroFormasPage: React.FC = () => {
             >
               Tipo *
             </label>
-            <select
+            <Select
               className="input-base"
               style={{
                 background: 'hsl(var(--muted) / 0.5)',
@@ -375,7 +364,7 @@ const FinanceiroFormasPage: React.FC = () => {
               <option value="transferência" style={{ background: 'hsl(var(--card))' }}>
                 Transferência Bancária / TED
               </option>
-            </select>
+            </Select>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -424,21 +413,7 @@ const FinanceiroFormasPage: React.FC = () => {
             </div>
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              gap: '0.75rem',
-              justifyContent: 'flex-end',
-              marginTop: '0.5rem',
-            }}
-          >
-            <Button variant="outline" onClick={() => setIsOpen(false)}>
-              Cancelar
-            </Button>
-            <Button variant="primary" onClick={save}>
-              Salvar
-            </Button>
-          </div>
+          <FormActions onCancel={() => setIsOpen(false)} onSubmit={save} submitLabel="Salvar" />
         </div>
       </Modal>
     </div>

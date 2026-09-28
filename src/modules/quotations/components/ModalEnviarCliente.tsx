@@ -89,7 +89,9 @@ export function ModalEnviarCliente({
       ) : (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-3">
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               type="button"
               onClick={() => setMethod('whatsapp')}
               className={`p-5 rounded-[var(--ui-radius-lg)] border-2 transition-colors flex flex-col items-center gap-3 ${
@@ -103,8 +105,10 @@ export function ModalEnviarCliente({
                 className={method === 'whatsapp' ? 'text-[var(--ui-color-teal-500)]' : ''}
               />
               <span className="font-semibold text-xs uppercase tracking-wide">WhatsApp</span>
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="plain"
+              size="plain"
               type="button"
               onClick={() => setMethod('email')}
               className={`p-5 rounded-[var(--ui-radius-lg)] border-2 transition-colors flex flex-col items-center gap-3 ${
@@ -118,7 +122,7 @@ export function ModalEnviarCliente({
                 className={method === 'email' ? 'text-[var(--ui-color-teal-500)]' : ''}
               />
               <span className="font-semibold text-xs uppercase tracking-wide">E-mail</span>
-            </button>
+            </Button>
           </div>
 
           <Card padding="md" variant="outlined">

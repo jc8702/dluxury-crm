@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { exportBudgetToPDF } from '../../modules/quotations/services/export-pdf';
 import type { Quotation, QuotationStatus } from './QuotationList';
+import { Button } from '../../components/ui';
 
 export interface DetailItem {
   id: string;
@@ -182,7 +183,9 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             type="button"
             onClick={onBack}
             aria-label="Voltar"
@@ -201,7 +204,7 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
             }}
           >
             <ArrowLeft size={16} />
-          </button>
+          </Button>
           <div>
             <h1
               style={{
@@ -245,7 +248,9 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
         </div>
 
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             type="button"
             onClick={onEdit}
             style={{
@@ -264,8 +269,10 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
             }}
           >
             <Edit3 size={16} /> Editar
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="plain"
+            size="plain"
             type="button"
             onClick={handlePrint}
             style={{
@@ -284,8 +291,10 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
             }}
           >
             <Printer size={16} /> Imprimir
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="plain"
+            size="plain"
             type="button"
             onClick={handleExportPDF}
             style={{
@@ -305,8 +314,10 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
             }}
           >
             <FileDown size={16} /> Exportar PDF
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="plain"
+            size="plain"
             type="button"
             onClick={handleDelete}
             style={{
@@ -332,7 +343,7 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
             }}
           >
             <Trash2 size={16} /> Deletar
-          </button>
+          </Button>
         </div>
       </header>
 

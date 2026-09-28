@@ -1,5 +1,6 @@
 import React from 'react';
 import { CreditCard, AlertTriangle } from 'lucide-react';
+import { Button } from './ui';
 
 interface BillingBlockedOverlayProps {
   errorMsg?: string;
@@ -117,7 +118,9 @@ const BillingBlockedOverlay: React.FC<BillingBlockedOverlayProps> = ({
             marginTop: '0.5rem',
           }}
         >
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             onClick={handleGoToPayment}
             style={{
               background: 'linear-gradient(135deg, hsl(var(--accent)), hsl(38_50%_45%))',
@@ -140,9 +143,11 @@ const BillingBlockedOverlay: React.FC<BillingBlockedOverlayProps> = ({
           >
             <CreditCard size={20} />
             REGULARIZAR ASSINATURA
-          </button>
+          </Button>
 
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             onClick={() => window.location.reload()}
             style={{
               background: 'hsl(var(--muted) / 0.5)',
@@ -165,7 +170,7 @@ const BillingBlockedOverlay: React.FC<BillingBlockedOverlayProps> = ({
             }}
           >
             Verificar Novamente
-          </button>
+          </Button>
         </div>
       </div>
     </div>

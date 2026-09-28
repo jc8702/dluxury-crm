@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import {
   Download,
@@ -26,6 +26,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+import { Select } from '../ui';
 
 const ReportsPage: React.FC = () => {
   const { info: toastInfo } = useToast();
@@ -227,7 +228,7 @@ const ReportsPage: React.FC = () => {
                     Selecionar Projeto
                   </label>
                   <div className="relative">
-                    <select
+                    <Select
                       className="w-full bg-[var(--ui-surface)] border border-[var(--ui-border)] rounded-[var(--ui-radius-md)] px-4 py-3 text-xs font-bold text-[var(--ui-text-primary)] focus:outline-none focus:border-[var(--ui-color-primary)] appearance-none"
                       value={selectedProjectId}
                       onChange={(e) => setSelectedProjectId(e.target.value)}
@@ -237,7 +238,7 @@ const ReportsPage: React.FC = () => {
                           {p.clientName || 'N/A'} - {p.ambiente}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
                   <Button
                     variant={activeReport === 'ind-romaneio' ? 'primary' : 'outline'}

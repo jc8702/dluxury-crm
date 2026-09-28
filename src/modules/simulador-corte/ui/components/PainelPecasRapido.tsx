@@ -1,6 +1,7 @@
 import React from 'react';
 import { Tag } from 'lucide-react';
 import type { PecaSimulacao } from '../../domain/types';
+import { Button } from '../../../../components/ui';
 
 interface PainelPecasRapidoProps {
   pecas: PecaSimulacao[];
@@ -56,7 +57,9 @@ export default function PainelPecasRapido({
                     : 'bg-muted/50 hover:bg-muted border-transparent'
                 }`}
               >
-                <button
+                <Button
+                  variant="plain"
+                  size="plain"
                   type="button"
                   onClick={() => onSelecionar(peca)}
                   className="flex-1 flex items-center gap-2.5 text-left min-w-0"
@@ -69,9 +72,11 @@ export default function PainelPecasRapido({
                       {peca.rotacionada ? ' | 90°' : ''}
                     </p>
                   </div>
-                </button>
+                </Button>
                 {onExportarEtiqueta && (
-                  <button
+                  <Button
+                    variant="plain"
+                    size="plain"
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -81,7 +86,7 @@ export default function PainelPecasRapido({
                     title="Exportar etiqueta QR"
                   >
                     <Tag size={12} />
-                  </button>
+                  </Button>
                 )}
               </div>
             );

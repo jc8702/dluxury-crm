@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Modal } from '../../../components/common/Modal';
-import { Button } from '../../../components/common/Button';
 import { Input } from '../../../components/common/Input';
 import { api } from '../../../lib/api';
+import { Select, FormActions } from '../../../components/ui';
 
 interface Props {
   isOpen: boolean;
@@ -106,7 +106,7 @@ export function AdiantamentoModal({ isOpen, onClose, colaboradores, onCreated }:
         )}
         <div>
           <label className="mb-2 block text-sm font-medium">Colaborador *</label>
-          <select
+          <Select
             value={form.colaborador_id}
             onChange={(e) => setForm({ ...form, colaborador_id: e.target.value })}
             className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm"
@@ -118,7 +118,7 @@ export function AdiantamentoModal({ isOpen, onClose, colaboradores, onCreated }:
                 {c.nome} — R$ {Number(c.salario_base).toFixed(2)}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <Input
@@ -183,14 +183,13 @@ export function AdiantamentoModal({ isOpen, onClose, colaboradores, onCreated }:
           </div>
         )}
 
-        <div className="flex justify-end gap-3 pt-2">
-          <Button type="button" variant="secondary" onClick={onClose} data-testid="btn-cancel">
-            Cancelar
-          </Button>
-          <Button type="submit" isLoading={loading} data-testid="btn-salvar-adiantamento">
-            Salvar
-          </Button>
-        </div>
+        <FormActions
+          onCancel={onClose}
+          loading={loading}
+          submitLabel="Salvar"
+          cancelTestId="btn-cancel"
+          submitTestId="btn-salvar-adiantamento"
+        />
       </form>
     </Modal>
   );

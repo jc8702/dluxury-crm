@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import type { LayoutChapa, PecaPosicionada } from '../../domain/entities/CuttingPlan';
 import { RotateCw, Plus, Minus, RotateCcw, Maximize, Grid, Ruler, Info } from 'lucide-react';
+import { Button } from '../../../../components/ui';
 
 interface CanvasAvancadoProps {
   layout: LayoutChapa;
@@ -369,35 +370,43 @@ export function CanvasAvancado({
 
       {/* TOOLBAR - CONTROLES DE ZOOM */}
       <div className="absolute bottom-6 right-6 flex flex-col gap-2 glass p-2 rounded-xl z-10">
-        <button
+        <Button
+          variant="plain"
+          size="plain"
           onClick={zoomIn}
           className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-primary/10 text-foreground transition-colors"
           title="Zoom In (Scroll Up)"
         >
           <Plus size={20} />
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="plain"
+          size="plain"
           onClick={zoomOut}
           className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-primary/10 text-foreground transition-colors"
           title="Zoom Out (Scroll Down)"
         >
           <Minus size={20} />
-        </button>
+        </Button>
         <div className="h-px bg-border my-1" />
-        <button
+        <Button
+          variant="plain"
+          size="plain"
           onClick={resetView}
           className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-primary/10 text-foreground transition-colors"
           title="Reset View"
         >
           <RotateCcw size={18} />
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="plain"
+          size="plain"
           onClick={fitToScreen}
           className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-primary/10 text-foreground transition-colors"
           title="Fit to Screen"
         >
           <Maximize size={18} />
-        </button>
+        </Button>
       </div>
 
       {/* TOOLBAR - OPÇÕES DE VISUALIZAÇÃO */}
@@ -425,7 +434,9 @@ export function CanvasAvancado({
 
       {/* BOTÃO ROTACIONAR PEÇA SELECIONADA */}
       {rotBtnPos && !executionMode && (
-        <button
+        <Button
+          variant="plain"
+          size="plain"
           onClick={rotacionarPecaSelecionada}
           className="absolute z-20 bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-sm font-black italic flex items-center gap-2 shadow-lg animate-fade-in"
           style={{
@@ -436,7 +447,7 @@ export function CanvasAvancado({
           title="Rotacionar peça 90°"
         >
           <RotateCw size={12} /> GIRAR 90°
-        </button>
+        </Button>
       )}
 
       {/* INFO ZOOM */}

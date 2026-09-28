@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Card,
   CardBody,
@@ -6,6 +6,7 @@ import {
   CardTitle,
   CardStat,
   Button,
+  BackButton,
   Input,
   Select,
   Badge,
@@ -21,7 +22,6 @@ import {
   CheckCircle2,
   FileDown,
   Search,
-  ArrowLeft,
   Save,
   Pencil,
   Calculator,
@@ -536,16 +536,14 @@ export default function QuotationForm() {
     <div className="min-h-screen bg-[var(--ui-bg-app)] text-[var(--ui-text-primary)] p-6 lg:p-8 pb-32">
       <header className="flex flex-wrap justify-between items-start gap-4 mb-6">
         <div className="flex items-center gap-4 min-w-0">
-          <Button
-            variant="ghost"
-            size="icon"
+          <BackButton
+            label=""
+            aria-label="Voltar"
+            style={{ marginBottom: 0 }}
             onClick={() => {
               window.location.href = `#/quotations`;
             }}
-            aria-label="Voltar"
-          >
-            <ArrowLeft size={20} />
-          </Button>
+          />
           <div className="min-w-0">
             <h1 className="text-2xl lg:text-3xl font-display font-semibold tracking-tight text-[var(--ui-text-primary)] flex flex-wrap items-center gap-2">
               <span>Orçamento</span>
@@ -744,7 +742,9 @@ export default function QuotationForm() {
                     </div>
                   ) : (
                     skus.map((sku) => (
-                      <button
+                      <Button
+                        variant="outline"
+                        size="plain"
                         key={`${sku.origem}-${sku.id}`}
                         type="button"
                         className="w-full text-left px-4 py-3 hover:bg-[var(--ui-color-teal-500)] hover:text-[var(--ui-action-secondary-fg)] transition-colors flex justify-between items-center border-b border-[var(--ui-border)] last:border-b-0 group"
@@ -775,7 +775,7 @@ export default function QuotationForm() {
                             className="text-[var(--ui-color-teal-500)] group-hover:text-[var(--ui-action-secondary-fg)]"
                           />
                         </div>
-                      </button>
+                      </Button>
                     ))
                   )}
                 </div>

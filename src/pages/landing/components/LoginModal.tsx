@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import styles from '../landing.module.css';
 
+import { Input } from '../../../components/ui';
+import { Button } from '../../../components/ui';
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -78,7 +80,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
           maxWidth: '400px',
         }}
       >
-        <button
+        <Button
+          variant="plain"
+          size="plain"
           className={styles.modalClose}
           onClick={onClose}
           aria-label="Fechar modal"
@@ -94,14 +98,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
           }}
         >
           ✕
-        </button>
+        </Button>
 
         <h2 style={{ marginBottom: '24px' }}>Entrar no D'Luxury CRM</h2>
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '16px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>Email</label>
-            <input
+            <Input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -121,7 +125,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
           <div style={{ marginBottom: '24px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>Senha</label>
-            <input
+            <Input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -145,7 +149,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
             </p>
           )}
 
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             type="submit"
             disabled={loading}
             style={{
@@ -161,7 +167,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
             }}
           >
             {loading ? 'Entrando...' : 'Entrar'}
-          </button>
+          </Button>
         </form>
 
         <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px', color: '#b8b8b8' }}>

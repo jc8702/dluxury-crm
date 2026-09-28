@@ -58,7 +58,7 @@ export class ImportadorProjeto {
 
 const handleImportarProjetoCore: TenantHandler = async (req, res) => {
   if (req.method !== 'POST')
-    return res.status(405).json({ success: false, error: 'M�todo n�o permitido' });
+    return res.status(405).json({ success: false, error: 'Método não permitido' });
 
   try {
     const tenantId = req.tenantId;

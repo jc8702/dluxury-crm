@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useInventoryStore as useInventory } from '../../../stores/useInventoryStore';
 import type { Material } from '../../../types/entities';
-import { Save, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import FornecedorFormModal from '../../suppliers/components/FornecedorFormModal';
 import { Modal } from '../../../components/common';
-import { Button, Input } from '../../../components/ui';
+import { Button, Input, FormActions } from '../../../components/ui';
+import { Select } from '../../ui';
 
 interface MaterialFormModalProps {
   material?: Material;
@@ -247,7 +248,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
                   <label className="block text-sm font-medium text-foreground/90 mb-2">
                     Categoria *
                   </label>
-                  <select
+                  <Select
                     className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
                     value={form.categoria_id}
                     onChange={(e) => setForm({ ...form, categoria_id: e.target.value })}
@@ -259,7 +260,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
                         {c.nome}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
                 <Input
                   label="Subcategoria"
@@ -288,7 +289,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
                   <label className="block text-sm font-medium text-foreground/90 mb-2">
                     Unidade Compra
                   </label>
-                  <select
+                  <Select
                     className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
                     value={form.unidade_compra}
                     onChange={(e) => handleUnitChange('unidade_compra', e.target.value)}
@@ -302,13 +303,13 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
                     <option value="barra">Barra</option>
                     <option value="un">Unidade</option>
                     <option value="par">Par</option>
-                  </select>
+                  </Select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground/90 mb-2">
                     Unidade Uso
                   </label>
-                  <select
+                  <Select
                     className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
                     value={form.unidade_uso}
                     onChange={(e) => handleUnitChange('unidade_uso', e.target.value)}
@@ -319,7 +320,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
                     <option value="kg">Quilo (kg)</option>
                     <option value="par">Par</option>
                     <option value="barra">Barra</option>
-                  </select>
+                  </Select>
                 </div>
               </div>
               <Input
@@ -403,7 +404,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
               Fornecedor Principal
             </label>
             <div className="flex gap-2">
-              <select
+              <Select
                 className="flex-1 rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
                 value={form.fornecedor_principal}
                 onChange={(e) => {
@@ -425,7 +426,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
                     </option>
                   ))}
                 </optgroup>
-              </select>
+              </Select>
               <Button
                 type="button"
                 onClick={() => setShowSupplierModal(true)}
@@ -459,7 +460,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
             />
             <div>
               <label className="block text-sm font-medium text-foreground/90 mb-2">Origem</label>
-              <select
+              <Select
                 className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
                 value={form.origem}
                 onChange={(e) => setForm({ ...form, origem: Number(e.target.value) })}
@@ -467,7 +468,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
                 <option value={0}>0 - Nacional</option>
                 <option value={1}>1 - Estrangeira (Importação Direta)</option>
                 <option value={2}>2 - Estrangeira (Adquirida no Mercado Interno)</option>
-              </select>
+              </Select>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
@@ -502,14 +503,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
 
         {error && <p className="text-destructive text-sm text-center font-semibold">{error}</p>}
 
-        <div className="flex gap-4 justify-end mt-4">
-          <Button type="button" variant="outline" onClick={onClose} className="min-w-[120px]">
-            Cancelar
-          </Button>
-          <Button type="submit" isLoading={loading} className="min-w-[160px]">
-            <Save size={16} /> Salvar Material
-          </Button>
-        </div>
+        <FormActions onCancel={onClose} loading={loading} submitLabel="Salvar Material" />
       </form>
 
       {showSupplierModal && (

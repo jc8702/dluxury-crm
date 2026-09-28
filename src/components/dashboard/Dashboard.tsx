@@ -489,7 +489,9 @@ const Dashboard: React.FC = () => {
               query: 'Qual o vão livre máximo recomendado para prateleira em MDF 15mm sem curvar?',
             },
           ].map((item) => (
-            <button
+            <Button
+              variant="outline"
+              size="plain"
               key={item.label}
               type="button"
               onClick={() => {
@@ -500,7 +502,7 @@ const Dashboard: React.FC = () => {
               className="inline-flex items-center ui-gap-1 px-3 py-1.5 bg-[var(--ui-surface)] hover:bg-[var(--ui-bg-subtle)] text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)] rounded-[var(--ui-radius-full)] text-xs font-medium transition-colors duration-[var(--ui-duration-fast)] border border-[var(--ui-border)]"
             >
               {item.label}
-            </button>
+            </Button>
           ))}
         </div>
       </Card>

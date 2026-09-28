@@ -21,7 +21,9 @@ import { Button } from '../../components/ui';
 import { useInventoryStore as useInventory } from '../../stores/useInventoryStore';
 import { useToast } from '../../context/ToastContext';
 import type { Material, CategoriaMaterial } from '../../types';
+import { Select } from '../../components/ui';
 
+import { Input } from '../../components/ui';
 type StockStatus = 'em_estoque' | 'baixo' | 'fora';
 
 const STATUS_META: Record<
@@ -415,7 +417,9 @@ export const StockList: React.FC<StockListProps> = ({
           const meta = STATUS_META[key];
           const active = statusFilter === key;
           return (
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               key={key}
               type="button"
               onClick={() => setStatusFilter(active ? 'all' : key)}
@@ -472,7 +476,7 @@ export const StockList: React.FC<StockListProps> = ({
                   {metrics.totals[key]}
                 </div>
               </div>
-            </button>
+            </Button>
           );
         })}
         <div
@@ -578,7 +582,7 @@ export const StockList: React.FC<StockListProps> = ({
                 pointerEvents: 'none',
               }}
             />
-            <input
+            <Input
               type="text"
               placeholder="Buscar por SKU, nome ou descrição…"
               value={search}
@@ -591,7 +595,7 @@ export const StockList: React.FC<StockListProps> = ({
             />
           </div>
 
-          <select
+          <Select
             value={categoryFilter}
             onChange={(e) => {
               setCategoryFilter(e.target.value);
@@ -606,9 +610,9 @@ export const StockList: React.FC<StockListProps> = ({
                 {c.nome}
               </option>
             ))}
-          </select>
+          </Select>
 
-          <select
+          <Select
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value as any);
@@ -621,9 +625,9 @@ export const StockList: React.FC<StockListProps> = ({
             <option value="em_estoque">Em Estoque</option>
             <option value="baixo">Baixo</option>
             <option value="fora">Fora de Estoque</option>
-          </select>
+          </Select>
 
-          <select
+          <Select
             value={locationFilter}
             onChange={(e) => {
               setLocationFilter(e.target.value);
@@ -638,10 +642,12 @@ export const StockList: React.FC<StockListProps> = ({
                 {l}
               </option>
             ))}
-          </select>
+          </Select>
 
           {hasActiveFilter && (
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               type="button"
               onClick={clearFilters}
               style={{
@@ -661,7 +667,7 @@ export const StockList: React.FC<StockListProps> = ({
               }}
             >
               <X size={12} /> Limpar filtros
-            </button>
+            </Button>
           )}
         </div>
 
@@ -862,7 +868,9 @@ export const StockList: React.FC<StockListProps> = ({
                           style={{ display: 'inline-flex', gap: '4px' }}
                         >
                           {onEntry && (
-                            <button
+                            <Button
+                              variant="plain"
+                              size="plain"
                               type="button"
                               onClick={() => onEntry(material)}
                               aria-label={`Registrar entrada de ${material.nome}`}
@@ -874,10 +882,12 @@ export const StockList: React.FC<StockListProps> = ({
                               )}
                             >
                               <ArrowDownCircle size={12} />
-                            </button>
+                            </Button>
                           )}
                           {onEdit && (
-                            <button
+                            <Button
+                              variant="plain"
+                              size="plain"
                               type="button"
                               onClick={() => onEdit(material)}
                               aria-label={`Editar ${material.nome}`}
@@ -889,10 +899,12 @@ export const StockList: React.FC<StockListProps> = ({
                               )}
                             >
                               <Edit3 size={12} />
-                            </button>
+                            </Button>
                           )}
                           {onDelete && (
-                            <button
+                            <Button
+                              variant="plain"
+                              size="plain"
                               type="button"
                               onClick={() =>
                                 onDelete ? onDelete(material) : handleDelete(material)
@@ -906,7 +918,7 @@ export const StockList: React.FC<StockListProps> = ({
                               )}
                             >
                               <Trash2 size={12} />
-                            </button>
+                            </Button>
                           )}
                         </div>
                       </td>

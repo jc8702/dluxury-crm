@@ -4,6 +4,9 @@ import type { KanbanCardType, MovimentoKanbanType } from '../../services/kanbanS
 import { api } from '../../lib/api.js';
 import { X, Send, Calendar, Clock, User, MessageSquare, ShieldAlert } from 'lucide-react';
 import ChatIntegrado from '../whatsapp/ChatIntegrado.js';
+import { useToast } from '../../context/ToastContext';
+import { Select } from '../ui';
+import { Button } from '../ui';
 
 interface KanbanCardDetailProps {
   card: KanbanCardType;
@@ -18,6 +21,7 @@ export default function KanbanCardDetail({ card, onClose, onUpdate }: KanbanCard
   const [nota, setNota] = useState('');
   const [historico, setHistorico] = useState<MovimentoKanbanType[]>([]);
   const [chatAtivo, setChatAtivo] = useState(false);
+  const { success: toastSuccess, error: toastError } = useToast();
 
   useEffect(() => {
     carregarUsuarios();
@@ -55,11 +59,11 @@ export default function KanbanCardDetail({ card, onClose, onUpdate }: KanbanCard
 
       // Se não digitou nota e só alterou responsável, podemos notificar sucesso
       if (!nota.trim()) {
-        alert('Responsável atualizado com sucesso!');
+        toastSuccess('Responsável atualizado', 'As alterações foram salvas com sucesso!');
       }
     } catch (err: any) {
       console.error('Erro ao salvar alterações da etapa:', err);
-      alert(err.message || 'Erro ao salvar alterações.');
+      toastError('Erro ao salvar', err.message || 'Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -118,12 +122,14 @@ export default function KanbanCardDetail({ card, onClose, onUpdate }: KanbanCard
                 {card.cliente_nome || 'Cliente avulso'}
               </h3>
             </div>
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               onClick={onClose}
               className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded-full transition-all"
             >
               <X className="w-5 h-5" />
-            </button>
+            </Button>
           </div>
 
           {/* Content */}
@@ -183,7 +189,7 @@ export default function KanbanCardDetail({ card, onClose, onUpdate }: KanbanCard
                   <User className="w-4 h-4 text-primary" />
                   Atribuir Responsável da Etapa
                 </label>
-                <select
+                <Select
                   value={responsavelId}
                   onChange={(e) => setResponsavelId(e.target.value)}
                   className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all appearance-none cursor-pointer"
@@ -194,7 +200,7 @@ export default function KanbanCardDetail({ card, onClose, onUpdate }: KanbanCard
                       {u.name || u.email}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               <div>
@@ -210,13 +216,15 @@ export default function KanbanCardDetail({ card, onClose, onUpdate }: KanbanCard
                     rows={3}
                     className="w-full px-3 py-2 pr-12 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
                   />
-                  <button
+                  <Button
+                    variant="plain"
+                    size="plain"
                     type="submit"
                     disabled={loading}
                     className="absolute right-3 bottom-3 p-2 bg-primary hover:bg-primary/90 disabled:bg-muted text-primary-foreground rounded-lg transition-all"
                   >
                     <Send className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </div>
               </div>
             </form>
@@ -276,7 +284,9 @@ export default function KanbanCardDetail({ card, onClose, onUpdate }: KanbanCard
           {/* Footer */}
           <div className="flex justify-end gap-3 p-6 border-t border-border bg-muted/15">
             {card.cliente_telefone ? (
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 type="button"
                 onClick={() => setChatAtivo(!chatAtivo)}
                 className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
@@ -287,9 +297,11 @@ export default function KanbanCardDetail({ card, onClose, onUpdate }: KanbanCard
               >
                 <MessageSquare className="w-4 h-4" />
                 {chatAtivo ? 'Ocultar Chat' : 'Conversar (WhatsApp)'}
-              </button>
+              </Button>
             ) : (
-              <button
+              <Button
+                variant="outline"
+                size="plain"
                 type="button"
                 disabled
                 title="Cliente sem telefone cadastrado"
@@ -297,15 +309,17 @@ export default function KanbanCardDetail({ card, onClose, onUpdate }: KanbanCard
               >
                 <MessageSquare className="w-4 h-4" />
                 Sem WhatsApp
-              </button>
+              </Button>
             )}
-            <button
+            <Button
+              variant="outline"
+              size="plain"
               type="button"
               onClick={onClose}
               className="px-4 py-2 border border-border bg-background hover:bg-muted text-sm font-semibold rounded-lg text-foreground transition-all"
             >
               Fechar
-            </button>
+            </Button>
           </div>
         </div>
 

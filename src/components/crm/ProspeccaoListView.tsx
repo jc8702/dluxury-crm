@@ -29,7 +29,10 @@ import {
   useProspeccaoFilters,
 } from '../../hooks/crm/useProspeccaoFilters';
 import type { Prospeccao, Metrics } from '../../hooks/crm/useProspeccaoHook';
+import { Select } from '../ui';
 
+import { Input } from '../ui';
+import { Button } from '../ui';
 interface Props {
   leads: Prospeccao[];
   metrics: Metrics | null;
@@ -92,18 +95,22 @@ function LeadCard({
           </span>
         </div>
         <div className="relative">
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             onClick={() => setMenuOpen((m) => !m)}
             className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
           >
             <MoreVertical size={16} />
-          </button>
+          </Button>
           {menuOpen && (
             <div
               className="absolute right-0 top-full mt-1 bg-card border border-border shadow-lg rounded-xl z-[100] min-w-[160px] py-1 animate-fade-in"
               onMouseLeave={() => setMenuOpen(false)}
             >
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 onClick={() => {
                   onEdit();
                   setMenuOpen(false);
@@ -111,9 +118,11 @@ function LeadCard({
                 className="w-full text-left px-3.5 py-2 text-xs text-foreground hover:bg-muted flex items-center gap-2 transition-colors"
               >
                 <Edit2 size={13} /> Editar
-              </button>
+              </Button>
               {['ganho', 'perdido'].map((s) => (
-                <button
+                <Button
+                  variant="plain"
+                  size="plain"
                   key={s}
                   onClick={() => {
                     onStatusChange(s);
@@ -127,9 +136,11 @@ function LeadCard({
                     <XCircle size={13} className="text-destructive" />
                   )}
                   Marcar como {STATUS_CONFIG[s].label}
-                </button>
+                </Button>
               ))}
-              <button
+              <Button
+                variant="danger"
+                size="plain"
                 onClick={() => {
                   onDelete();
                   setMenuOpen(false);
@@ -137,7 +148,7 @@ function LeadCard({
                 className="w-full text-left px-3.5 py-2 text-xs text-destructive hover:bg-destructive/10 flex items-center gap-2 transition-colors border-t border-border mt-1 pt-2"
               >
                 <Trash2 size={13} /> Excluir
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -237,24 +248,30 @@ export function ProspeccaoListView({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant="outline"
+            size="plain"
             onClick={onViewToggle}
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-muted hover:bg-muted/80 text-foreground border border-border rounded-xl text-sm font-semibold transition-colors"
           >
             <BarChart2 size={15} /> {view === 'kanban' ? 'Ver Lista' : 'Ver Kanban'}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
+            size="plain"
             onClick={onRefresh}
             className="inline-flex items-center gap-2 p-2.5 bg-muted hover:bg-muted/80 text-foreground border border-border rounded-xl text-sm font-semibold transition-colors"
           >
             <RefreshCw size={15} />
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="plain"
+            size="plain"
             onClick={onNew}
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary/95 text-primary-foreground rounded-xl text-sm font-semibold transition-colors shadow-lg shadow-primary/10"
           >
             <Plus size={16} /> Novo Lead
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -319,14 +336,14 @@ export function ProspeccaoListView({
             size={14}
             className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/60"
           />
-          <input
+          <Input
             className="w-full bg-card border border-border rounded-xl pl-10 pr-4 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15"
             placeholder="Buscar lead..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
           />
         </div>
-        <select
+        <Select
           className="bg-card border border-border rounded-xl px-4 py-2 text-sm text-foreground outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 cursor-pointer min-w-[150px]"
           value={filterStatus}
           onChange={(e) => onFilterStatusChange(e.target.value)}
@@ -337,8 +354,8 @@ export function ProspeccaoListView({
               {v.label}
             </option>
           ))}
-        </select>
-        <select
+        </Select>
+        <Select
           className="bg-card border border-border rounded-xl px-4 py-2 text-sm text-foreground outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 cursor-pointer min-w-[150px]"
           value={filterTemp}
           onChange={(e) => onFilterTempChange(e.target.value)}
@@ -347,7 +364,7 @@ export function ProspeccaoListView({
           <option value="frio">❄️ Frio</option>
           <option value="morno">🌡️ Morno</option>
           <option value="quente">🔥 Quente</option>
-        </select>
+        </Select>
       </div>
 
       {loading ? (
@@ -437,18 +454,22 @@ export function ProspeccaoListView({
                     </span>
                   )}
                   <div className="flex items-center gap-2">
-                    <button
+                    <Button
+                      variant="outline"
+                      size="plain"
                       onClick={() => onEdit(lead)}
                       className="p-2 bg-muted hover:bg-muted/80 text-foreground border border-border rounded-lg transition-colors"
                     >
                       <Edit2 size={13} />
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="plain"
                       onClick={() => onDelete(lead.id)}
                       className="p-2 bg-destructive/10 hover:bg-destructive/15 text-destructive border border-destructive/20 rounded-lg transition-colors"
                     >
                       <Trash2 size={13} />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               );

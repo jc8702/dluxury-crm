@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import KanbanBoard from '../../components/kanban/KanbanBoard';
-import { Button, Card } from '../../components/ui';
+import { Button, Card, FormActions } from '../../components/ui';
 import { CardBody as CardContent } from '../../components/ui';
 import {
   Input,
@@ -385,14 +385,10 @@ const ProjectKanban: React.FC = () => {
             />
           </div>
 
-          <div className="flex gap-4 mt-4">
-            <Button type="submit" className="flex-1">
-              âœ“ {editingItem ? 'Salvar' : 'Criar Projeto'}
-            </Button>
-            <Button type="button" variant="secondary" onClick={closeModal}>
-              Cancelar
-            </Button>
-          </div>
+          <FormActions
+            onCancel={closeModal}
+            submitLabel={editingItem ? 'Salvar' : 'Criar Projeto'}
+          />
         </form>
       </Modal>
     </div>

@@ -5,6 +5,7 @@ import { Plus, Trash2, Scissors, AlertTriangle, Layers } from 'lucide-react';
 import type { Peca } from '../../domain/types';
 import { Button } from '../../../../components/ui';
 
+import { Input } from '../../../../components/ui';
 interface PainelPecasChapaProps {
   chapaId: string;
   pecas: Peca[];
@@ -85,9 +86,7 @@ export function PainelPecasChapa({
           </div>
           <div className="flex items-center gap-1.5 bg-black/30 px-2 py-1 rounded-md">
             <Layers size={10} className="text-[#FFA500]" />
-            <span className="text-sm font-black text-[#FFA500]">
-              {areaInfo.chapasEstimadas}x
-            </span>
+            <span className="text-sm font-black text-[#FFA500]">{areaInfo.chapasEstimadas}x</span>
           </div>
         </div>
       )}
@@ -120,7 +119,7 @@ export function PainelPecasChapa({
               className="group bg-[#222] border border-[#333] p-4 rounded-xl hover:border-[#FFA500]/30 transition-all"
             >
               <div className="flex items-start justify-between mb-3">
-                <input
+                <Input
                   type="text"
                   value={p.nome}
                   onChange={(e) => onUpdatePeca(p.id, { nome: e.target.value.toUpperCase() })}
@@ -143,7 +142,7 @@ export function PainelPecasChapa({
                     Largura (mm)
                   </label>
                   <div className="bg-[#111] p-2 rounded-lg border border-[#333] flex items-center">
-                    <input
+                    <Input
                       type="number"
                       value={p.largura}
                       onChange={(e) => onUpdatePeca(p.id, { largura: Number(e.target.value) })}
@@ -156,7 +155,7 @@ export function PainelPecasChapa({
                     Altura (mm)
                   </label>
                   <div className="bg-[#111] p-2 rounded-lg border border-[#333] flex items-center">
-                    <input
+                    <Input
                       type="number"
                       value={p.altura}
                       onChange={(e) => onUpdatePeca(p.id, { altura: Number(e.target.value) })}
@@ -171,7 +170,7 @@ export function PainelPecasChapa({
                     Material / Acabamento
                   </label>
                   <div className="bg-[#111] p-2 rounded-lg border border-[#333] flex items-center">
-                    <input
+                    <Input
                       type="text"
                       value={p.material || ''}
                       onChange={(e) =>
@@ -187,7 +186,7 @@ export function PainelPecasChapa({
               <div className="mt-4 pt-4 border-t border-[#333] flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <label className="text-xs font-black text-[#444] uppercase">Qtd</label>
-                  <input
+                  <Input
                     type="number"
                     value={p.quantidade || 1}
                     onChange={(e) => onUpdatePeca(p.id, { quantidade: Number(e.target.value) })}

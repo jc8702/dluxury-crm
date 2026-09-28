@@ -83,6 +83,7 @@ function LoadingScreen() {
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 import { hasFeature } from './lib/features';
+import { Button } from './components/ui';
 
 function AuthGuard() {
   const { user, authLoading } = useAuth();
@@ -151,7 +152,9 @@ function FeatureGuard({ feature }: { feature: string }) {
         >
           Esta funcionalidade pertence a um plano superior. Faça o upgrade para liberar o acesso.
         </p>
-        <button
+        <Button
+          variant="plain"
+          size="plain"
           onClick={() => (window.location.hash = '#/configuracoes')}
           style={{
             background: 'hsl(var(--primary))',
@@ -166,7 +169,7 @@ function FeatureGuard({ feature }: { feature: string }) {
           }}
         >
           Gerenciar Assinatura
-        </button>
+        </Button>
       </div>
     );
   }

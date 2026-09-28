@@ -4,6 +4,7 @@ import Sidebar from './Sidebar';
 import { api } from '../../lib/api';
 import BillingBlockedOverlay from '../BillingBlockedOverlay';
 import { AlertCircle, CreditCard, Menu } from 'lucide-react';
+import { Button } from '../ui';
 
 export default function Layout() {
   const navigate = useNavigate();
@@ -76,12 +77,14 @@ export default function Layout() {
       <main className="flex-1 h-screen overflow-y-auto overflow-x-hidden relative flex flex-col">
         {/* Top bar for mobile */}
         <div className="lg:hidden flex items-center h-14 px-4 border-b border-border/50 shrink-0 bg-card">
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             onClick={() => setIsMobileSidebarOpen(true)}
             className="p-2 -ml-2 rounded-lg hover:bg-accent"
           >
             <Menu size={20} />
-          </button>
+          </Button>
         </div>
 
         {/* Banner: Trial */}
@@ -95,13 +98,15 @@ export default function Layout() {
                 <strong className="font-semibold">{subData?.diasRestantes} dias</strong>.
               </span>
             </div>
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               onClick={() => navigate('/checkout')}
               className="btn btn-primary text-xs px-4 py-1.5 w-full sm:w-auto rounded-[var(--ui-radius-md)]"
             >
               <CreditCard size={14} className="mr-1.5" />
               ATIVAR ASSINATURA
-            </button>
+            </Button>
           </div>
         )}
 
@@ -114,13 +119,15 @@ export default function Layout() {
                 Pagamento em aberto. Regularize para evitar suspensão.
               </span>
             </div>
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               onClick={() => navigate('/checkout')}
               className="btn btn-danger text-xs px-4 py-1.5 w-full sm:w-auto rounded-[var(--ui-radius-md)]"
             >
               <CreditCard size={14} className="mr-1.5" />
               REGULARIZAR
-            </button>
+            </Button>
           </div>
         )}
 

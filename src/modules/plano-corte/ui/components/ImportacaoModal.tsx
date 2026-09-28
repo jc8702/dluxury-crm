@@ -73,7 +73,9 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
             Tipo de Arquivo
           </label>
           <div className="grid grid-cols-3 gap-3">
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               onClick={() => setTipo('planocorte')}
               className={`h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-bold border transition-all ${
                 tipo === 'planocorte'
@@ -83,8 +85,10 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
             >
               <FileText size={16} />
               Plano Corte
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="plain"
+              size="plain"
               onClick={() => setTipo('csv')}
               className={`h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-bold border transition-all ${
                 tipo === 'csv'
@@ -94,8 +98,10 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
             >
               <FileSpreadsheet size={16} />
               CSV Simples
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="plain"
+              size="plain"
               onClick={() => setTipo('sketchup')}
               className={`h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-bold border transition-all ${
                 tipo === 'sketchup'
@@ -105,7 +111,7 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
             >
               <Ruler size={16} />
               SketchUp
-            </button>
+            </Button>
           </div>
         </div>
 

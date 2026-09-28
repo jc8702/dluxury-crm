@@ -1,6 +1,7 @@
 import { Modal, Button, Input } from '../common';
 import { Layers } from 'lucide-react';
 import type { Titulo, ContaInterna } from '../../modules/financeiro/domain/types';
+import { Select } from '../ui';
 
 interface BaixaProps {
   baixaModal: any;
@@ -63,9 +64,7 @@ export function BaixaModal({ baixaModal, contas, onClose, onConfirm }: BaixaProp
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-red-400">
-                  <span className="text-xs font-bold uppercase tracking-wider">
-                    Juros (1%/mês)
-                  </span>
+                  <span className="text-xs font-bold uppercase tracking-wider">Juros (1%/mês)</span>
                   <span className="font-bold italic">
                     + R$ {valorJuros.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
@@ -85,7 +84,7 @@ export function BaixaModal({ baixaModal, contas, onClose, onConfirm }: BaixaProp
             <label className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">
               Conta Bancária / Débito
             </label>
-            <select id="conta-interna-id-pagar" className="input-base">
+            <Select id="conta-interna-id-pagar" className="input-base">
               <option value="">Selecione a conta de origem...</option>
               {contas.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -93,7 +92,7 @@ export function BaixaModal({ baixaModal, contas, onClose, onConfirm }: BaixaProp
                   {Number(c.saldo_atual).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="flex gap-4 justify-end">
             <Button
@@ -140,7 +139,7 @@ export function EditTituloModal({ editModal, onClose, onChange, onSave }: EditPr
             <label className="mb-2 block text-sm font-medium text-foreground/90 uppercase tracking-widest text-muted-foreground text-xs ml-1">
               Status Operacional
             </label>
-            <select
+            <Select
               className="input-base uppercase font-bold"
               value={editModal?.status || ''}
               onChange={(e) =>
@@ -150,7 +149,7 @@ export function EditTituloModal({ editModal, onClose, onChange, onSave }: EditPr
               <option value="aberto">ABERTO / PENDENTE</option>
               <option value="pago">PAGO / LIQUIDADO</option>
               <option value="cancelado">CANCELADO</option>
-            </select>
+            </Select>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-6">
@@ -245,7 +244,7 @@ export function LoteModal({
             <label className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">
               Conta Bancária Corporativa *
             </label>
-            <select
+            <Select
               className="input-base uppercase font-bold"
               value={loteData.conta_interna_id}
               onChange={(e) => onDataChange({ ...loteData, conta_interna_id: e.target.value })}
@@ -257,14 +256,14 @@ export function LoteModal({
                   {Number(c.saldo_atual).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">
                 Data da Liquidação
               </label>
-              <input
+              <Input
                 type="date"
                 className="input-base font-bold"
                 value={loteData.data_baixa}
@@ -275,7 +274,7 @@ export function LoteModal({
               <label className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">
                 Observação Interna
               </label>
-              <input
+              <Input
                 type="text"
                 className="input-base"
                 placeholder="Motivo da baixa em lote..."

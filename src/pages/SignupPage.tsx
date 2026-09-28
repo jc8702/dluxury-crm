@@ -3,6 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { api, setAuthToken } from '../lib/api';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { Input } from '../components/ui';
+import { Button } from '../components/ui';
 const SignupPage: React.FC = () => {
   const { setUser } = useAuth();
   const navigate = useNavigate();
@@ -149,7 +151,7 @@ const SignupPage: React.FC = () => {
               <label className="text-xs font-bold block mb-1.5 uppercase tracking-wide">
                 Nome da Marcenaria / Empresa
               </label>
-              <input
+              <Input
                 id="input-empresa"
                 type="text"
                 required
@@ -166,7 +168,7 @@ const SignupPage: React.FC = () => {
                 Subdomínio de Acesso
               </label>
               <div className="flex items-center relative">
-                <input
+                <Input
                   id="input-subdominio"
                   type="text"
                   required
@@ -204,7 +206,7 @@ const SignupPage: React.FC = () => {
               <label className="text-xs font-bold block mb-1.5 uppercase tracking-wide">
                 Nome Completo do Administrador
               </label>
-              <input
+              <Input
                 id="input-nome-admin"
                 type="text"
                 required
@@ -220,7 +222,7 @@ const SignupPage: React.FC = () => {
               <label className="text-xs font-bold block mb-1.5 uppercase tracking-wide">
                 E-mail Corporativo
               </label>
-              <input
+              <Input
                 id="input-email"
                 type="email"
                 required
@@ -236,7 +238,7 @@ const SignupPage: React.FC = () => {
               <label className="text-xs font-bold block mb-1.5 uppercase tracking-wide">
                 Senha de Acesso (Mín. 8 caracteres)
               </label>
-              <input
+              <Input
                 id="input-senha"
                 type="password"
                 required
@@ -252,7 +254,7 @@ const SignupPage: React.FC = () => {
               <label className="text-xs font-bold block mb-1.5 uppercase tracking-wide">
                 Confirmar Senha
               </label>
-              <input
+              <Input
                 id="input-confirmar-senha"
                 type="password"
                 required
@@ -305,14 +307,17 @@ const SignupPage: React.FC = () => {
             )}
 
             {/* Botão de Envio */}
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               id="btn-signup-submit"
               type="submit"
-              disabled={loading || subdomainStatus !== 'available'}
+              isLoading={loading}
+              disabled={subdomainStatus !== 'available'}
               className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold border-none cursor-pointer text-base tracking-wider uppercase shadow-lg shadow-primary/30 transition-all duration-200 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Provisionando Conta...' : 'Iniciar Teste de 14 Dias'}
-            </button>
+              Iniciar Teste de 14 Dias
+            </Button>
 
             <div className="text-center mt-2 text-sm font-medium">
               <span className="text-muted-foreground">Já possui uma conta? </span>

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, Package, Loader2 } from 'lucide-react';
 import { apiCall } from '../../../lib/api';
 
+import { Input } from '../../../components/ui';
+import { Button } from '../../../components/ui';
 interface SKU {
   id: string;
   codigo: string;
@@ -87,7 +89,7 @@ export function SKUAutocomplete({
     <div className={`relative ${className}`} ref={containerRef}>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <input
+        <Input
           type="text"
           value={query}
           onChange={handleInputChange}
@@ -109,7 +111,9 @@ export function SKUAutocomplete({
           ) : (
             <div className="py-2">
               {results.map((sku) => (
-                <button
+                <Button
+                  variant="plain"
+                  size="plain"
                   key={sku.id}
                   onClick={() => {
                     onSelect(sku);
@@ -142,7 +146,7 @@ export function SKUAutocomplete({
                       Custo Base: R$ {Number(sku.precoUnitario || 0).toFixed(2)}
                     </div>
                   </div>
-                </button>
+                </Button>
               ))}
             </div>
           )}

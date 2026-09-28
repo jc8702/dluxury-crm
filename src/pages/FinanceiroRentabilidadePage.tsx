@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useToast } from '../context/ToastContext';
 import {
   TrendingUp,
   TrendingDown,
@@ -15,7 +16,6 @@ import {
   CheckCircle,
   Edit3,
   X,
-  Save,
 } from 'lucide-react';
 import {
   LineChart,
@@ -38,7 +38,10 @@ import type {
   ClienteRentabilidade,
   GraficoMargemDado,
 } from '../services/rentabilidadeService.js';
+import { Select } from '../components/ui';
 
+import { Input } from '../components/ui';
+import { Button, FormActions } from '../components/ui';
 const fmt = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const COLORS = [
@@ -51,6 +54,7 @@ const COLORS = [
 ];
 
 export default function FinanceiroRentabilidadePage() {
+  const { error: toastError } = useToast();
   const [periodo, setPeriodo] = useState('mes');
   const [buscaCliente, setBuscaCliente] = useState('');
 
@@ -131,7 +135,7 @@ export default function FinanceiroRentabilidadePage() {
       }
     } catch (err) {
       console.error('Erro ao salvar custos reais:', err);
-      alert('Falha ao salvar custos reais.');
+      toastError('Falha ao salvar', 'Erro ao salvar os custos reais.');
     } finally {
       setSaving(false);
     }
@@ -169,7 +173,7 @@ export default function FinanceiroRentabilidadePage() {
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">
                 Período
               </label>
-              <select
+              <Select
                 value={periodo}
                 onChange={(e) => setPeriodo(e.target.value)}
                 className="bg-surface border border-border rounded-lg text-sm px-3 py-2 focus:ring-1 focus:ring-[hsl(var(--warning))] font-bold"
@@ -177,13 +181,13 @@ export default function FinanceiroRentabilidadePage() {
                 <option value="mes">Último Mês</option>
                 <option value="trimestre">Último Trimestre</option>
                 <option value="ano">Último Ano</option>
-              </select>
+              </Select>
             </div>
             <div>
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">
                 Filtro Cliente
               </label>
-              <input
+              <Input
                 type="text"
                 placeholder="Filtrar por nome..."
                 value={buscaCliente}
@@ -419,12 +423,14 @@ export default function FinanceiroRentabilidadePage() {
                         <div>
                           <div className="text-sm font-bold text-foreground flex items-center gap-1.5">
                             {p.numero_op}
-                            <button
+                            <Button
+                              variant="plain"
+                              size="plain"
                               onClick={() => abrirEdicao(p)}
                               className="p-1 text-muted-foreground hover:text-[hsl(var(--warning))] rounded transition-all cursor-pointer"
                             >
                               <Edit3 className="w-3.5 h-3.5" />
-                            </button>
+                            </Button>
                           </div>
                           <div className="text-xs text-muted-foreground font-semibold uppercase mt-0.5">
                             {p.cliente}
@@ -466,12 +472,14 @@ export default function FinanceiroRentabilidadePage() {
                         <div>
                           <div className="text-sm font-bold text-foreground flex items-center gap-1.5">
                             {p.numero_op}
-                            <button
+                            <Button
+                              variant="plain"
+                              size="plain"
                               onClick={() => abrirEdicao(p)}
                               className="p-1 text-muted-foreground hover:text-[hsl(var(--warning))] rounded transition-all cursor-pointer"
                             >
                               <Edit3 className="w-3.5 h-3.5" />
-                            </button>
+                            </Button>
                           </div>
                           <div className="text-xs text-muted-foreground font-semibold uppercase mt-0.5">
                             {p.cliente}
@@ -585,12 +593,14 @@ export default function FinanceiroRentabilidadePage() {
                   {editingProject.numero_op} - {editingProject.cliente}
                 </h3>
               </div>
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 onClick={() => setEditingProject(null)}
                 className="p-2 text-muted-foreground hover:text-primary rounded-lg hover:bg-muted cursor-pointer"
               >
                 <X className="w-5 h-5" />
-              </button>
+              </Button>
             </div>
 
             {/* Modal Form */}
@@ -603,7 +613,7 @@ export default function FinanceiroRentabilidadePage() {
                   <label className="block mb-1.5 text-muted-foreground">
                     Custo Material Real (R$)
                   </label>
-                  <input
+                  <Input
                     type="number"
                     step="0.01"
                     value={costMat}
@@ -615,7 +625,7 @@ export default function FinanceiroRentabilidadePage() {
                   <label className="block mb-1.5 text-muted-foreground">
                     Custo Mão de Obra Real (R$)
                   </label>
-                  <input
+                  <Input
                     type="number"
                     step="0.01"
                     value={costMao}
@@ -628,7 +638,7 @@ export default function FinanceiroRentabilidadePage() {
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block mb-1.5 text-muted-foreground">Retrabalho (R$)</label>
-                  <input
+                  <Input
                     type="number"
                     step="0.01"
                     value={costRetrabalho}
@@ -640,7 +650,7 @@ export default function FinanceiroRentabilidadePage() {
                   <label className="block mb-1.5 text-muted-foreground">
                     Desperdício Material (R$)
                   </label>
-                  <input
+                  <Input
                     type="number"
                     step="0.01"
                     value={costDesperdicio}
@@ -650,7 +660,7 @@ export default function FinanceiroRentabilidadePage() {
                 </div>
                 <div>
                   <label className="block mb-1.5 text-muted-foreground">Tempo Real (Horas)</label>
-                  <input
+                  <Input
                     type="number"
                     step="0.1"
                     value={tempoHoras}
@@ -673,22 +683,11 @@ export default function FinanceiroRentabilidadePage() {
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                <button
-                  type="button"
-                  onClick={() => setEditingProject(null)}
-                  className="px-4 py-2.5 border border-border hover:bg-muted rounded-lg transition-all text-muted-foreground hover:text-foreground cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-4 py-2.5 bg-[hsl(var(--warning))] text-foreground hover:bg-[hsl(var(--warning))]/90 font-black rounded-lg transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                >
-                  <Save className="w-4 h-4" /> {saving ? 'Salvando...' : 'Salvar Ajustes'}
-                </button>
-              </div>
+              <FormActions
+                onCancel={() => setEditingProject(null)}
+                loading={saving}
+                submitLabel="Salvar Ajustes"
+              />
             </form>
           </div>
         </div>

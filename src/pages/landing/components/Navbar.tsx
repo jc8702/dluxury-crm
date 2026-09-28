@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoginModal } from './LoginModal';
 import styles from '../landing.module.css';
+import { Button } from '../../../components/ui';
 
 export const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -57,18 +58,22 @@ export const Navbar: React.FC = () => {
 
           {/* AÇÕES */}
           <div className="flex items-center gap-4">
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               onClick={() => setLoginOpen(true)}
               className="px-4 py-2 text-sm font-semibold text-gray-300 hover:text-white transition-colors duration-200"
             >
               Entrar
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="plain"
+              size="plain"
               onClick={() => navigate('/signup')}
               className={`px-5 py-2.5 text-sm font-bold ${styles.btnPrimary}`}
             >
               Experimentar Grátis
-            </button>
+            </Button>
           </div>
         </div>
       </header>

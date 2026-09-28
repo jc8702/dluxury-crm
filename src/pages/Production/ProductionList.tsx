@@ -24,7 +24,9 @@ import { Button } from '../../components/ui';
 import Header from '../../components/layout/Header';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
+import { Select } from '../../components/ui';
 
+import { Input } from '../../components/ui';
 export type ProductionStatus = 'PENDING' | 'IN_PROGRESS' | 'PAUSED' | 'COMPLETED' | 'CANCELLED';
 
 export type ProductionBucket = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'PAUSED';
@@ -524,7 +526,9 @@ export const ProductionList: React.FC<ProductionListProps> = ({
           const meta = BUCKET_META[b];
           const active = bucketFilter === b;
           return (
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               key={b}
               type="button"
               onClick={() => setBucketFilter(active ? 'all' : b)}
@@ -581,7 +585,7 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                   {metrics.buckets[b]}
                 </div>
               </div>
-            </button>
+            </Button>
           );
         })}
         <div
@@ -674,7 +678,9 @@ export const ProductionList: React.FC<ProductionListProps> = ({
               border: `1px solid #E0E0E0`,
             }}
           >
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               type="button"
               onClick={() => setView('table')}
               aria-pressed={view === 'table'}
@@ -694,8 +700,10 @@ export const ProductionList: React.FC<ProductionListProps> = ({
               }}
             >
               <TableIcon size={14} /> Tabela
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="plain"
+              size="plain"
               type="button"
               onClick={() => setView('kanban')}
               aria-pressed={view === 'kanban'}
@@ -715,7 +723,7 @@ export const ProductionList: React.FC<ProductionListProps> = ({
               }}
             >
               <LayoutGrid size={14} /> Kanban
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -739,7 +747,7 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                 pointerEvents: 'none',
               }}
             />
-            <input
+            <Input
               type="text"
               placeholder="Buscar por OP, produto ou orçamento…"
               value={search}
@@ -764,7 +772,7 @@ export const ProductionList: React.FC<ProductionListProps> = ({
             />
           </div>
 
-          <select
+          <Select
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value as any);
@@ -789,11 +797,11 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                 {m.label}
               </option>
             ))}
-          </select>
+          </Select>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <Calendar size={14} color={'#666666'} />
-            <input
+            <Input
               type="date"
               value={dateFrom}
               onChange={(e) => {
@@ -822,7 +830,7 @@ export const ProductionList: React.FC<ProductionListProps> = ({
             >
               até
             </span>
-            <input
+            <Input
               type="date"
               value={dateTo}
               onChange={(e) => {
@@ -846,7 +854,9 @@ export const ProductionList: React.FC<ProductionListProps> = ({
           </div>
 
           {hasActiveFilter && (
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               type="button"
               onClick={clearFilters}
               style={{
@@ -866,7 +876,7 @@ export const ProductionList: React.FC<ProductionListProps> = ({
               }}
             >
               <X size={12} /> Limpar filtros
-            </button>
+            </Button>
           )}
         </div>
 
@@ -1060,7 +1070,9 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                               style={{ display: 'inline-flex', gap: '4px' }}
                             >
                               {onView && (
-                                <button
+                                <Button
+                                  variant="plain"
+                                  size="plain"
                                   type="button"
                                   onClick={() => onView(op)}
                                   aria-label={`Visualizar ${op.op_id}`}
@@ -1068,10 +1080,12 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                                   style={iconBtn('#17A2B8', '#D1ECF1', '#7FC5D9')}
                                 >
                                   <Eye size={12} />
-                                </button>
+                                </Button>
                               )}
                               {onEdit && (
-                                <button
+                                <Button
+                                  variant="plain"
+                                  size="plain"
                                   type="button"
                                   onClick={() => onEdit(op)}
                                   aria-label={`Editar ${op.op_id}`}
@@ -1079,10 +1093,12 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                                   style={iconBtn('#0D5FB8', '#F0F7FF', '#E0EFFF')}
                                 >
                                   <Edit3 size={12} />
-                                </button>
+                                </Button>
                               )}
                               {onDelete && (
-                                <button
+                                <Button
+                                  variant="plain"
+                                  size="plain"
                                   type="button"
                                   onClick={() => (onDelete ? onDelete(op) : handleDelete(op))}
                                   aria-label={`Excluir ${op.op_id}`}
@@ -1090,7 +1106,7 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                                   style={iconBtn('#DC3545', '#FBE9EB', '#F0A8AE')}
                                 >
                                   <Trash2 size={12} />
-                                </button>
+                                </Button>
                               )}
                             </div>
                           </td>
@@ -1311,23 +1327,27 @@ const KanbanView: React.FC<{
                     </span>
                     <div style={{ display: 'flex', gap: 2 }} onClick={(e) => e.stopPropagation()}>
                       {onEdit && (
-                        <button
+                        <Button
+                          variant="plain"
+                          size="plain"
                           type="button"
                           onClick={() => onEdit(op)}
                           aria-label={`Editar ${op.op_id}`}
                           style={iconBtn('#0D5FB8', '#F0F7FF', '#E0EFFF', 24)}
                         >
                           <Edit3 size={10} />
-                        </button>
+                        </Button>
                       )}
-                      <button
+                      <Button
+                        variant="plain"
+                        size="plain"
                         type="button"
                         onClick={() => (onDelete ? onDelete(op) : fallbackDelete(op))}
                         aria-label={`Excluir ${op.op_id}`}
                         style={iconBtn('#DC3545', '#FBE9EB', '#F0A8AE', 24)}
                       >
                         <Trash2 size={10} />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>

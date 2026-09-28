@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect } from 'react';
-import { TrendingUp, Calendar, Grid, List, ArrowRight, Info, ArrowLeft } from 'lucide-react';
+import { TrendingUp, Calendar, Grid, List, ArrowRight, Info } from 'lucide-react';
 import { api } from '../lib/api';
 import { CardSkeleton } from '../components/common/Skeleton';
 import {
@@ -15,6 +15,7 @@ import {
 import { Button, Card, CardHeader, CardTitle } from '../components/ui';
 import { CardBody as CardContent } from '../components/ui';
 import { formatCurrency } from '../utils/calculations';
+import { BackButton } from '../components/ui';
 const fmt = formatCurrency;
 
 interface Periodo {
@@ -77,23 +78,10 @@ export default function FinanceiroFluxoCaixaPage() {
       className="page-container anim-fade-in"
       style={{ maxWidth: '1400px', margin: '0 auto', padding: '1rem' }}
     >
-      <Button
-        variant="ghost"
+      <BackButton
+        label="Voltar ao Painel Financeiro"
         onClick={() => (window.location.hash = '#/financeiro')}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          fontSize: '0.75rem',
-          color: 'hsl(var(--muted-foreground))',
-          marginBottom: '1rem',
-          padding: 0,
-          height: 'auto',
-          background: 'transparent',
-        }}
-      >
-        <ArrowLeft size={16} /> Voltar ao Painel Financeiro
-      </Button>
+      />
       {/* Header */}
       <header
         style={{
@@ -149,7 +137,9 @@ export default function FinanceiroFluxoCaixaPage() {
             }}
           >
             {(['daily', 'weekly', 'monthly'] as Granularity[]).map((g) => (
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 key={g}
                 onClick={() => applyFilter(g, regime)}
                 style={{
@@ -165,7 +155,7 @@ export default function FinanceiroFluxoCaixaPage() {
                 }}
               >
                 {g === 'daily' ? 'DIA' : g === 'weekly' ? 'SEM' : 'MÊS'}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -181,7 +171,9 @@ export default function FinanceiroFluxoCaixaPage() {
             }}
           >
             {(['caixa', 'competencia'] as Regime[]).map((r) => (
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 key={r}
                 onClick={() => applyFilter(granularity, r)}
                 style={{
@@ -197,7 +189,7 @@ export default function FinanceiroFluxoCaixaPage() {
                 }}
               >
                 {r === 'caixa' ? 'CAIXA' : 'COMP.'}
-              </button>
+              </Button>
             ))}
           </div>
         </div>

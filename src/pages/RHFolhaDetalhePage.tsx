@@ -8,6 +8,7 @@ import { FolhaGrid } from '../modules/rh/components/FolhaGrid';
 import { LucroSociosCard } from '../modules/rh/components/LucroSociosCard';
 import { ReciboPreview } from '../modules/rh/components/ReciboPreview';
 import type { StatusFolha } from '../modules/rh/domain/types';
+import { useToast } from '../context/ToastContext';
 
 const fmt = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
@@ -33,6 +34,7 @@ export default function RHFolhaDetalhePage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedReciboItemId, setSelectedReciboItemId] = useState<string | null>(null);
+  const { error: toastError } = useToast();
 
   const loadFolha = useCallback(async () => {
     if (!id) return;
@@ -81,7 +83,7 @@ export default function RHFolhaDetalhePage() {
       await api.rh.folhas.fechar(folha.id);
       await loadFolha();
     } catch (e: any) {
-      alert(e.message || 'Erro ao fechar folha');
+      toastError('Erro ao fechar folha', e.message || 'Tente novamente.');
     } finally {
       setActionLoading(false);
     }
@@ -95,7 +97,7 @@ export default function RHFolhaDetalhePage() {
       await api.rh.folhas.reabrir(folha.id);
       await loadFolha();
     } catch (e: any) {
-      alert(e.message || 'Erro ao reabrir folha');
+      toastError('Erro ao reabrir folha', e.message || 'Tente novamente.');
     } finally {
       setActionLoading(false);
     }

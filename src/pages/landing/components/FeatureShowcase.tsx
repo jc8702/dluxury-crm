@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from '../landing.module.css';
+import { Button } from '../../../components/ui';
 
 const ThreeDViewer = React.lazy(() =>
   import('./3DViewer').then((m) => ({ default: m.ThreeDViewer })),
@@ -39,9 +40,14 @@ export const FeatureShowcase: React.FC = () => {
           <ThreeDViewer />
         </React.Suspense>
 
-        <button className={styles.btnExplore} onClick={() => navigate('/modulos')}>
+        <Button
+          variant="plain"
+          size="plain"
+          className={styles.btnExplore}
+          onClick={() => navigate('/modulos')}
+        >
           Explorar Todos os Módulos →
-        </button>
+        </Button>
 
         {/* Módulos Grid */}
         <div className={styles.modulesGrid}>

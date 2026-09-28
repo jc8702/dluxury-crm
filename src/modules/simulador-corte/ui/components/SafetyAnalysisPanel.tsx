@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import type { IssueWithRecommendation, SetupDiff, CollisionPolicy } from '../../domain/types';
 import { determinarAcao } from '../../domain/adjustmentEngine';
+import { Button } from '../../../../components/ui';
 
 interface SafetyAnalysisPanelProps {
   issuesWithRecs: IssueWithRecommendation[];
@@ -118,7 +119,9 @@ export default function SafetyAnalysisPanel({
                 key={issue.id}
                 className="bg-background/60 border border-border rounded-lg overflow-hidden"
               >
-                <button
+                <Button
+                  variant="plain"
+                  size="plain"
                   type="button"
                   onClick={() => onJumpToIssue(issue.tempo, issue.posicao)}
                   className="w-full text-left p-2 hover:bg-muted/30 transition-all flex flex-col gap-1 group"
@@ -141,7 +144,7 @@ export default function SafetyAnalysisPanel({
                     {issue.mensagem}
                   </p>
                   <p className="text-muted-foreground text-sm line-clamp-2">{issue.descricao}</p>
-                </button>
+                </Button>
 
                 {rec && (
                   <div className="border-t border-border/60 px-2 py-1.5">
@@ -186,7 +189,9 @@ export default function SafetyAnalysisPanel({
                     </div>
 
                     <div className="flex gap-1 mt-1">
-                      <button
+                      <Button
+                        variant="plain"
+                        size="plain"
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -196,27 +201,33 @@ export default function SafetyAnalysisPanel({
                         title="Visualizar na cena 3D"
                       >
                         <Eye size={10} /> 3D
-                      </button>
+                      </Button>
                       {!blocked ? (
                         acao === 'apply' ? (
-                          <button
+                          <Button
+                            variant="plain"
+                            size="plain"
                             type="button"
                             onClick={() => onApplyRecommendation(iwr)}
                             className="flex-1 flex items-center justify-center gap-1 bg-success/20 hover:bg-success/30 text-success text-sm font-bold py-1 rounded transition-all"
                           >
                             <CheckCircle size={10} /> APLICAR
-                          </button>
+                          </Button>
                         ) : (
-                          <button
+                          <Button
+                            variant="plain"
+                            size="plain"
                             type="button"
                             onClick={() => onApplyRecommendation(iwr)}
                             className="flex-1 flex items-center justify-center gap-1 bg-accent/20 hover:bg-accent/30 text-accent text-sm font-bold py-1 rounded transition-all"
                           >
                             <HelpCircle size={10} /> APLICAR SUGESTÃO
-                          </button>
+                          </Button>
                         )
                       ) : (
-                        <button
+                        <Button
+                          variant="danger"
+                          size="plain"
                           type="button"
                           onClick={() => {
                             onChangeCollisionPolicy?.(
@@ -227,7 +238,7 @@ export default function SafetyAnalysisPanel({
                           title="Altere a política de colisão no painel CNC para desbloquear ajustes"
                         >
                           <XCircle size={10} /> MUDAR POLÍTICA
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -251,14 +262,16 @@ export default function SafetyAnalysisPanel({
       )}
 
       {(diffs.length > 0 || totalResolviveis > 0) && (
-        <button
+        <Button
+          variant="plain"
+          size="plain"
           type="button"
           onClick={onRerunSimulation}
           disabled={isRerunning}
           className="w-full flex items-center justify-center gap-1.5 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-sm py-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Cpu size={12} /> REEXECUTAR SIMULAÇÃO COM AJUSTES
-        </button>
+        </Button>
       )}
 
       <style>{`

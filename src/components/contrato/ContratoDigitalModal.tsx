@@ -14,6 +14,9 @@ import {
 import { contratoDigitalService } from '../../services/contratoDigitalService';
 import type { ContratoDigital, HistoricoAssinatura } from '../../services/contratoDigitalService';
 import { api } from '../../lib/api';
+import { useToast } from '../../context/ToastContext';
+import { Select } from '../ui';
+import { Button } from '../ui';
 
 interface Props {
   orcamentoId: string;
@@ -28,6 +31,7 @@ export default function ContratoDigitalModal({
   onClose,
   onStatusChanged,
 }: Props) {
+  const { info: toastInfo } = useToast();
   const [selectedOrcamentoId, setSelectedOrcamentoId] = useState(propOrcamentoId);
   const [selectedNumeroOrcamento, setSelectedNumeroOrcamento] = useState(propNumeroOrcamento);
   const [orcamentosList, setOrcamentosList] = useState<any[]>([]);
@@ -171,12 +175,14 @@ export default function ContratoDigitalModal({
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
       <div className="bg-card border border-border rounded-xl p-6 max-w-xl w-full relative">
         {/* Fechar */}
-        <button
+        <Button
+          variant="plain"
+          size="plain"
           onClick={onClose}
           className="absolute right-4 top-4 text-muted-foreground hover:text-foreground transition cursor-pointer"
         >
           <X size={20} />
-        </button>
+        </Button>
 
         {/* Header */}
         <div className="flex items-center gap-2.5 mb-6">
@@ -212,7 +218,7 @@ export default function ContratoDigitalModal({
               <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">
                 Selecione o Orçamento de Referência
               </label>
-              <select
+              <Select
                 className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-xs text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all cursor-pointer font-bold"
                 value={selectedOrcamentoId}
                 onChange={(e) => handleOrcamentoChange(e.target.value)}
@@ -232,7 +238,7 @@ export default function ContratoDigitalModal({
                     </option>
                   );
                 })}
-              </select>
+              </Select>
             </div>
 
             {orcDetNorm && (
@@ -272,23 +278,17 @@ export default function ContratoDigitalModal({
               </p>
             </div>
 
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               onClick={handleGerarContrato}
-              disabled={generating || !selectedOrcamentoId || (orcDetNorm && !orcDetNorm.clienteId)}
+              isLoading={generating}
+              disabled={!selectedOrcamentoId || (orcDetNorm && !orcDetNorm.clienteId)}
               className="px-6 py-2.5 bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-lg transition disabled:opacity-50 flex items-center gap-2 mx-auto cursor-pointer text-xs"
             >
-              {generating ? (
-                <>
-                  <RefreshCw className="animate-spin" size={16} />
-                  Emitindo contrato...
-                </>
-              ) : (
-                <>
-                  <Send size={16} />
-                  Gerar e Enviar para Assinatura
-                </>
-              )}
-            </button>
+              <Send size={16} />
+              Gerar e Enviar para Assinatura
+            </Button>
           </div>
         ) : (
           /* Estado 2: Contrato Gerado e Pendente ou Assinado */
@@ -383,13 +383,15 @@ export default function ContratoDigitalModal({
                     <ExternalLink size={16} />
                   </a>
 
-                  <button
+                  <Button
+                    variant="plain"
+                    size="plain"
                     onClick={handleSimularAssinatura}
                     disabled={simulating}
                     className="flex-1 py-2.5 bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-lg transition disabled:opacity-50 text-sm cursor-pointer"
                   >
                     {simulating ? 'Processando...' : 'Simular Assinatura'}
-                  </button>
+                  </Button>
                 </div>
                 <p className="text-[10px] text-muted-foreground text-center">
                   * A simulação dispara o webhook de aprovação, gerando a OP e atualizando o
@@ -405,7 +407,7 @@ export default function ContratoDigitalModal({
                 rel="noopener noreferrer"
                 onClick={(e) => {
                   e.preventDefault();
-                  alert('Download do PDF assinado iniciado (Simulação).');
+                  toastInfo('Download iniciado', 'Download do PDF assinado iniciado (simulação).');
                 }}
                 className="w-full py-2.5 bg-muted hover:bg-muted/80 border border-border text-foreground font-semibold rounded-lg text-center flex items-center justify-center gap-1.5 transition text-sm cursor-pointer"
               >

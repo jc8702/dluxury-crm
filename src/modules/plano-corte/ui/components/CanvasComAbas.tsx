@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { CanvasAvancado } from './CanvasAvancado';
 import type { ChapaSelecionada, ResultadoOtimizacaoPorChapa } from '../../domain/types';
 import { Box, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '../../../../components/ui';
 
 interface CanvasComAbasProps {
   chapaAtiva: ChapaSelecionada | null;
@@ -89,23 +90,27 @@ export function CanvasComAbas({ chapaAtiva, resultado }: CanvasComAbasProps) {
           <div className="flex items-center gap-8">
             {totalLayouts > 1 && (
               <div className="flex items-center gap-2">
-                <button
+                <Button
+                  variant="plain"
+                  size="plain"
                   onClick={() => setLayoutIndex(Math.max(0, layoutIndex - 1))}
                   disabled={layoutIndex === 0}
                   className="p-1.5 rounded-lg bg-muted/10 hover:bg-muted/20 text-foreground disabled:opacity-20 disabled:cursor-not-allowed transition-all"
                 >
                   <ChevronLeft size={14} />
-                </button>
+                </Button>
                 <span className="text-xs font-black text-muted-foreground uppercase tracking-wider min-w-[60px] text-center">
                   Chapa {layoutIndex + 1}/{totalLayouts}
                 </span>
-                <button
+                <Button
+                  variant="plain"
+                  size="plain"
                   onClick={() => setLayoutIndex(Math.min(totalLayouts - 1, layoutIndex + 1))}
                   disabled={layoutIndex === totalLayouts - 1}
                   className="p-1.5 rounded-lg bg-muted/10 hover:bg-muted/20 text-foreground disabled:opacity-20 disabled:cursor-not-allowed transition-all"
                 >
                   <ChevronRight size={14} />
-                </button>
+                </Button>
               </div>
             )}
             <div className="flex flex-col items-end">

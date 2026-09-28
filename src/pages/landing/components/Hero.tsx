@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from '../landing.module.css';
+import { Button } from '../../../components/ui';
 
 export const Hero: React.FC = () => {
   const navigate = useNavigate();
@@ -38,12 +39,22 @@ export const Hero: React.FC = () => {
         </p>
 
         <div className={styles.ctaGroup}>
-          <button onClick={handleStartTest} className={`px-8 py-4 ${styles.btnPrimary}`}>
+          <Button
+            variant="plain"
+            size="plain"
+            onClick={handleStartTest}
+            className={`px-8 py-4 ${styles.btnPrimary}`}
+          >
             Começar Teste de 14 Dias
-          </button>
-          <button onClick={handleExploreModules} className={`px-8 py-4 ${styles.btnSecondary}`}>
+          </Button>
+          <Button
+            variant="plain"
+            size="plain"
+            onClick={handleExploreModules}
+            className={`px-8 py-4 ${styles.btnSecondary}`}
+          >
             Explorar Módulos →
-          </button>
+          </Button>
         </div>
       </div>
     </section>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useInventoryStore as useInventory } from '../../stores/useInventoryStore';
 import MaterialCard from './components/MaterialCard';
 import MovimentacaoModal from './components/MovimentacaoModal';
@@ -12,6 +12,7 @@ import { CardBody as CardContent } from '../../components/ui';
 import { Input, Badge } from '../../components/common';
 import EstoqueGranular from '../estoque/EstoqueGranular';
 import type { Material } from '../../types/entities';
+import { Select } from '../ui';
 
 type MainTab = 'materials' | 'history' | 'granular' | 'skus';
 
@@ -24,6 +25,11 @@ const Inventory: React.FC = () => {
   const [filterCategory, setFilterCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+
+  // Carrega materiais/categorias/movimentações na primeira visita à página
+  useEffect(() => {
+    reloadInventoryData();
+  }, [reloadInventoryData]);
 
   // Modals
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
@@ -148,7 +154,7 @@ const Inventory: React.FC = () => {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <select
+            <Select
               className="bg-background border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 text-foreground w-full sm:w-[180px]"
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
@@ -159,8 +165,8 @@ const Inventory: React.FC = () => {
                   {c.nome}
                 </option>
               ))}
-            </select>
-            <select
+            </Select>
+            <Select
               className="bg-background border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 text-foreground w-full sm:w-[160px]"
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
@@ -171,7 +177,7 @@ const Inventory: React.FC = () => {
               <option value="critico">Crítico</option>
               <option value="zerado">Zerado</option>
               <option value="critico_zerado">Atenção (Crítico/Zerado)</option>
-            </select>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -449,7 +455,9 @@ const Inventory: React.FC = () => {
                   "Quais materiais e técnicas de vedação são obrigatórios para gabinetes de pia sob áreas úmidas no padrão D'Luxury?",
               },
             ].map((item, idx) => (
-              <button
+              <Button
+                variant="outline"
+                size="plain"
                 key={idx}
                 onClick={() => {
                   const event = new CustomEvent('dlux-open-chat', {
@@ -461,7 +469,7 @@ const Inventory: React.FC = () => {
               >
                 <span>✨</span>
                 {item.label}
-              </button>
+              </Button>
             ))}
           </div>
         </CardContent>

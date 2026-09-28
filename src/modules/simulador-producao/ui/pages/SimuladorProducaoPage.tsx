@@ -35,7 +35,10 @@ import { exportarRelatorioProducao } from '../components/ExportarRelatorioProduc
 import { ProductionScenarioRepository } from '../../infrastructure/repositories/ProductionScenarioRepository';
 import type { ProductionScenarioRecord } from '../../infrastructure/repositories/ProductionScenarioRepository';
 import PlanoCorteVisao from '../components/PlanoCorteVisao';
+import { Select } from '../../../../components/ui';
 
+import { Input } from '../../../../components/ui';
+import { Button } from '../../../../components/ui';
 type SourceMode = 'manual' | 'plano';
 
 interface PieceRow extends ProductionPieceInput {
@@ -157,7 +160,9 @@ function EdgeToggle({
   onClick: () => void;
 }) {
   return (
-    <button
+    <Button
+      variant="plain"
+      size="plain"
       type="button"
       onClick={onClick}
       className={`rounded-md px-2 py-1 text-xs font-bold tracking-wider transition-all border ${
@@ -167,7 +172,7 @@ function EdgeToggle({
       }`}
     >
       {label}
-    </button>
+    </Button>
   );
 }
 
@@ -347,7 +352,9 @@ export default function SimuladorProducaoPage() {
             </div>
 
             <div className="flex gap-2 mb-3">
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 type="button"
                 onClick={() => setSourceMode('manual')}
                 className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
@@ -357,8 +364,10 @@ export default function SimuladorProducaoPage() {
                 }`}
               >
                 Manual
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="plain"
+                size="plain"
                 type="button"
                 onClick={() => setSourceMode('plano')}
                 className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
@@ -368,7 +377,7 @@ export default function SimuladorProducaoPage() {
                 }`}
               >
                 PLANO DE CORTE
-              </button>
+              </Button>
             </div>
 
             {sourceMode === 'plano' && (
@@ -376,7 +385,7 @@ export default function SimuladorProducaoPage() {
                 <label className="block text-xs uppercase tracking-wider text-muted-foreground">
                   PLANO CARREGADO
                 </label>
-                <select
+                <Select
                   value={selectedPlanId}
                   onChange={(e) => setSelectedPlanId(e.target.value)}
                   className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-accent"
@@ -390,8 +399,10 @@ export default function SimuladorProducaoPage() {
                       {plan.nome}
                     </option>
                   ))}
-                </select>
-                <button
+                </Select>
+                <Button
+                  variant="plain"
+                  size="plain"
                   type="button"
                   onClick={loadPlanPieces}
                   disabled={!selectedPlan}
@@ -399,20 +410,24 @@ export default function SimuladorProducaoPage() {
                 >
                   <Upload size={14} />
                   IMPORTAR PEÇAS DO PLANO
-                </button>
+                </Button>
               </div>
             )}
 
             {sourceMode === 'manual' && (
               <div className="flex gap-2">
-                <button
+                <Button
+                  variant="plain"
+                  size="plain"
                   type="button"
                   onClick={loadExample}
                   className="flex-1 rounded-lg bg-muted hover:bg-muted/80 text-foreground text-sm py-2 font-medium"
                 >
                   Usar exemplo
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="plain"
+                  size="plain"
                   type="button"
                   onClick={() => {
                     setPieces([]);
@@ -421,13 +436,15 @@ export default function SimuladorProducaoPage() {
                   className="flex-1 rounded-lg bg-muted hover:bg-muted/80 text-foreground text-sm py-2 font-medium"
                 >
                   LIMPAR
-                </button>
+                </Button>
               </div>
             )}
 
             {pieces.length > 0 && (
               <div className="flex gap-2 mt-3">
-                <button
+                <Button
+                  variant="plain"
+                  size="plain"
                   type="button"
                   onClick={() => {
                     setShowSaveModal(true);
@@ -437,15 +454,17 @@ export default function SimuladorProducaoPage() {
                 >
                   <Save size={14} />
                   SALVAR
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="plain"
+                  size="plain"
                   type="button"
                   onClick={openLoadModal}
                   className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-muted hover:bg-muted/80 text-foreground text-sm py-2 font-medium"
                 >
                   <FolderOpen size={14} />
                   CARREGAR
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -456,14 +475,16 @@ export default function SimuladorProducaoPage() {
                 <Layers3 size={14} />
                 PEÇAS
               </h2>
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 type="button"
                 onClick={addPiece}
                 className="flex items-center gap-1 text-xs text-accent hover:text-foreground transition-colors"
               >
                 <Plus size={12} />
                 ADICIONAR
-              </button>
+              </Button>
             </div>
 
             <div className="space-y-3 max-h-[540px] overflow-y-auto pr-1 custom-scrollbar">
@@ -481,22 +502,26 @@ export default function SimuladorProducaoPage() {
                         PEÇA {index + 1}
                       </span>
                       <div className="flex items-center gap-2">
-                        <button
+                        <Button
+                          variant="plain"
+                          size="plain"
                           type="button"
                           onClick={() => exportarEtiquetaProducao(piece, index, pieces.length)}
                           className="text-accent hover:text-foreground transition-colors"
                           title="EXPORTAR ETIQUETA QR"
                         >
                           <Tag size={14} />
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="plain"
+                          size="plain"
                           type="button"
                           onClick={() => removePiece(piece.id)}
                           className="text-muted-foreground hover:text-red-400 transition-colors"
                           title="REMOVER PEÇA"
                         >
                           <Trash2 size={14} />
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
@@ -505,7 +530,7 @@ export default function SimuladorProducaoPage() {
                         <span className="block text-xs uppercase tracking-wider text-muted-foreground">
                           Nome
                         </span>
-                        <input
+                        <Input
                           value={piece.nome}
                           onChange={(e) => updatePiece(piece.id, 'nome', e.target.value)}
                           className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-accent"
@@ -515,7 +540,7 @@ export default function SimuladorProducaoPage() {
                         <span className="block text-xs uppercase tracking-wider text-muted-foreground">
                           Qtd
                         </span>
-                        <input
+                        <Input
                           type="number"
                           min={1}
                           value={piece.quantidade}
@@ -532,7 +557,7 @@ export default function SimuladorProducaoPage() {
                         <span className="block text-xs uppercase tracking-wider text-muted-foreground">
                           Largura mm
                         </span>
-                        <input
+                        <Input
                           type="number"
                           min={1}
                           value={piece.largura}
@@ -544,7 +569,7 @@ export default function SimuladorProducaoPage() {
                         <span className="block text-xs uppercase tracking-wider text-muted-foreground">
                           Altura mm
                         </span>
-                        <input
+                        <Input
                           type="number"
                           min={1}
                           value={piece.altura}
@@ -614,14 +639,16 @@ export default function SimuladorProducaoPage() {
             </div>
           </div>
 
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             type="button"
             onClick={runSimulation}
             className="w-full flex items-center justify-center gap-2 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 font-extrabold tracking-wide py-3"
           >
             <Scissors size={16} />
             SIMULAR PRODUÇÃO
-          </button>
+          </Button>
         </div>
 
         <div className="space-y-4">
@@ -719,14 +746,16 @@ export default function SimuladorProducaoPage() {
               </div>
 
               <div className="flex justify-end">
-                <button
+                <Button
+                  variant="plain"
+                  size="plain"
                   type="button"
                   onClick={() => exportarRelatorioProducao('simulação-produção', pieces, result)}
                   className="flex items-center gap-2 rounded-lg bg-muted hover:bg-muted/80 text-foreground text-xs font-semibold px-4 py-2"
                 >
                   <FileText size={14} />
                   RELATÓRIO PDF
-                </button>
+                </Button>
               </div>
 
               <div className="bg-card border border-border rounded-xl p-4">
@@ -790,14 +819,16 @@ export default function SimuladorProducaoPage() {
                   <Layers3 size={14} />
                   PLANO DE CORTE — VISÃO GERAL
                 </h2>
-                <button
+                <Button
+                  variant="plain"
+                  size="plain"
                   type="button"
                   onClick={() => exportarTodasEtiquetas(pieces)}
                   className="flex items-center gap-2 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 font-bold text-xs px-3 py-2"
                 >
                   <Tag size={12} />
                   EXPORTAR ETIQUETAS
-                </button>
+                </Button>
               </div>
               <PlanoCorteVisao pieces={pieces} />
             </div>
@@ -820,17 +851,19 @@ export default function SimuladorProducaoPage() {
                 <Save size={16} />
                 SALVAR CENÁRIO
               </h3>
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 onClick={() => setShowSaveModal(false)}
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 <X size={16} />
-              </button>
+              </Button>
             </div>
             <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-1">
               NOME DO CENÁRIO
             </label>
-            <input
+            <Input
               value={scenarioName}
               onChange={(e) => setScenarioName(e.target.value)}
               onKeyDown={(e) => {
@@ -841,27 +874,26 @@ export default function SimuladorProducaoPage() {
               autoFocus
             />
             <div className="flex gap-2">
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 type="button"
                 onClick={() => setShowSaveModal(false)}
                 className="flex-1 rounded-lg bg-muted hover:bg-muted/80 text-foreground text-sm py-2 font-medium"
               >
                 CANCELAR
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="plain"
+                size="plain"
                 type="button"
                 onClick={handleSaveScenario}
-                disabled={!scenarioName.trim() || saving}
+                isLoading={saving}
+                disabled={!scenarioName.trim()}
                 className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-sm py-2"
               >
-                {saving ? (
-                  'SALVANDO...'
-                ) : (
-                  <>
-                    <Check size={14} /> SALVAR
-                  </>
-                )}
-              </button>
+                <Check size={14} /> SALVAR
+              </Button>
             </div>
           </div>
         </div>
@@ -882,12 +914,14 @@ export default function SimuladorProducaoPage() {
                 <FolderOpen size={16} />
                 CARREGAR CENÁRIO
               </h3>
-              <button
+              <Button
+                variant="plain"
+                size="plain"
                 onClick={() => setShowLoadModal(false)}
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 <X size={16} />
-              </button>
+              </Button>
             </div>
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 min-h-0">
               {loadingScenarios ? (
@@ -915,21 +949,25 @@ export default function SimuladorProducaoPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 ml-3 shrink-0">
-                      <button
+                      <Button
+                        variant="plain"
+                        size="plain"
                         type="button"
                         onClick={() => handleDeleteScenario(scenario.id!)}
                         className="rounded-lg bg-muted hover:bg-red-500/20 text-muted-foreground hover:text-red-400 p-2 transition-colors"
                         title="EXCLUIR"
                       >
                         <Trash2 size={14} />
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="plain"
+                        size="plain"
                         type="button"
                         onClick={() => handleLoadScenario(scenario)}
                         className="rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 font-bold text-xs px-3 py-2"
                       >
                         CARREGAR
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ))

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { X } from 'lucide-react';
+import { Button } from '../ui';
 
 interface ModalProps {
   isOpen: boolean;
@@ -120,13 +121,15 @@ export function Modal({
           <h2 id="modal-title" className="text-xl font-semibold text-foreground">
             {title}
           </h2>
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             onClick={onClose}
             className="text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Fechar modal"
           >
             <X className="w-5 h-5" />
-          </button>
+          </Button>
         </div>
 
         {/* Content */}

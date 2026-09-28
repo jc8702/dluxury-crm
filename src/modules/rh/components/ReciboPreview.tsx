@@ -147,12 +147,14 @@ export const ReciboPreview: React.FC<ReciboPreviewProps> = ({ folhaId, itemId, o
       <div className="bg-card text-card-foreground border rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         <div className="flex items-center justify-between p-4 border-b bg-muted/40">
           <h3 className="text-lg font-bold">Recibo de Pagamento</h3>
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             onClick={onClose}
             className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"
           >
             <X size={20} />
-          </button>
+          </Button>
         </div>
 
         <div className="p-6">

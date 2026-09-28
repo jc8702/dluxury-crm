@@ -572,7 +572,7 @@ const handleSKUsCore: TenantHandler = async (req, res) => {
     if (req.method === 'PATCH' || req.method === 'PUT') {
       const f = req.body;
       const { id } = req.query;
-      if (!id) return res.status(400).json({ success: false, error: 'ID do SKU n�o fornecido' });
+      if (!id) return res.status(400).json({ success: false, error: 'ID do SKU não fornecido' });
       const r = await sql`UPDATE estoque_materiais_detalhado SET 
         descricao = COALESCE(${f.nome}, descricao),
         preco_custo_unitario = COALESCE(${f.preco_base}, preco_custo_unitario),

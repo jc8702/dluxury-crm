@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Bell, Info, ShoppingCart, Calendar, FileText, CheckCircle } from 'lucide-react';
 import { api } from '../../lib/api';
 import type { Notificacao } from '../../api-lib/types';
+import { Button } from '../ui';
 
 const NotificationBell: React.FC = () => {
   const [notifications, setNotifications] = useState<Notificacao[]>([]);
@@ -91,7 +92,9 @@ const NotificationBell: React.FC = () => {
 
   return (
     <div style={{ position: 'relative' }} ref={dropdownRef}>
-      <button
+      <Button
+        variant="plain"
+        size="plain"
         onClick={() => setIsOpen(!isOpen)}
         aria-label={`Notificações ${unreadCount > 0 ? `(${unreadCount} não lidas)` : ''}`}
         aria-expanded={isOpen}
@@ -136,7 +139,7 @@ const NotificationBell: React.FC = () => {
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
-      </button>
+      </Button>
 
       {isOpen && (
         <div
@@ -165,7 +168,9 @@ const NotificationBell: React.FC = () => {
             }}
           >
             <h3 style={{ fontSize: '0.875rem', fontWeight: '700', margin: 0 }}>Notificações</h3>
-            <button
+            <Button
+              variant="plain"
+              size="plain"
               onClick={() => api.notificacoes.markAllRead().then(() => fetchNotifications())}
               style={{
                 background: 'none',
@@ -177,7 +182,7 @@ const NotificationBell: React.FC = () => {
               }}
             >
               Marcar lidas
-            </button>
+            </Button>
           </div>
 
           <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
@@ -259,7 +264,9 @@ const NotificationBell: React.FC = () => {
             )}
           </div>
 
-          <button
+          <Button
+            variant="plain"
+            size="plain"
             onClick={() => {
               setIsOpen(false);
               window.location.hash = '/notificacoes';
@@ -277,7 +284,7 @@ const NotificationBell: React.FC = () => {
             }}
           >
             Ver todas
-          </button>
+          </Button>
         </div>
       )}
     </div>

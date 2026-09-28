@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../../lib/api.js';
 import { Search, RotateCcw, Filter, User, AlertCircle, Layers } from 'lucide-react';
+import { Select } from '../ui';
 
+import { Input } from '../ui';
+import { Button } from '../ui';
 interface KanbanFiltersProps {
   onFilterChange: (filters: {
     filtro_responsavel: string;
@@ -66,7 +69,7 @@ export default function KanbanFilters({ onFilterChange }: KanbanFiltersProps) {
           </label>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
+            <Input
               type="text"
               placeholder="Ex: OP-2026, João..."
               value={busca}
@@ -83,7 +86,7 @@ export default function KanbanFilters({ onFilterChange }: KanbanFiltersProps) {
           </label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <select
+            <Select
               value={filtroResponsavel}
               onChange={(e) => setFiltroResponsavel(e.target.value)}
               className="w-full pl-9 pr-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all appearance-none cursor-pointer"
@@ -94,7 +97,7 @@ export default function KanbanFilters({ onFilterChange }: KanbanFiltersProps) {
                   {u.name || u.email}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         </div>
 
@@ -105,7 +108,7 @@ export default function KanbanFilters({ onFilterChange }: KanbanFiltersProps) {
           </label>
           <div className="relative">
             <AlertCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <select
+            <Select
               value={filtroPrioridade}
               onChange={(e) => setFiltroPrioridade(e.target.value ? Number(e.target.value) : '')}
               className="w-full pl-9 pr-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all appearance-none cursor-pointer"
@@ -114,7 +117,7 @@ export default function KanbanFilters({ onFilterChange }: KanbanFiltersProps) {
               <option value="1">1 - Urgente</option>
               <option value="5">5 - Normal</option>
               <option value="9">9 - Baixa</option>
-            </select>
+            </Select>
           </div>
         </div>
 
@@ -125,7 +128,7 @@ export default function KanbanFilters({ onFilterChange }: KanbanFiltersProps) {
           </label>
           <div className="relative">
             <Layers className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <select
+            <Select
               value={filtroAmbiente}
               onChange={(e) => setFiltroAmbiente(e.target.value)}
               className="w-full pl-9 pr-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all appearance-none cursor-pointer"
@@ -136,20 +139,22 @@ export default function KanbanFilters({ onFilterChange }: KanbanFiltersProps) {
               <option value="Setor C">Setor C - Bordas</option>
               <option value="Setor D">Setor D - Montagem Prévia</option>
               <option value="Setor E">Setor E - Embalagem & Logística</option>
-            </select>
+            </Select>
           </div>
         </div>
       </div>
 
       {(busca || filtroResponsavel || filtroPrioridade || filtroAmbiente) && (
         <div className="flex justify-end">
-          <button
+          <Button
+            variant="outline"
+            size="plain"
             onClick={limparFiltros}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg border border-transparent hover:border-border transition-all"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             Limpar Filtros
-          </button>
+          </Button>
         </div>
       )}
     </div>

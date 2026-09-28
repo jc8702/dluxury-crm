@@ -6,8 +6,8 @@ import { exportarEtiquetas } from '../../application/usecases/ExportarEtiquetas'
 import { exportarCNC, salvarArquivoCNC } from '../../application/usecases/ExportarCNC';
 import { useToast } from '../../../../context/ToastContext';
 import type { ResultadoOtimizacao, LayoutChapa } from '../../domain/entities/CuttingPlan';
-// @todo migrar para Modal de @/components/ui (trocar isOpen → open)
 import { Modal } from '../../../../components/common';
+import { Button } from '../../../../components/ui';
 
 interface ExportacaoModalProps {
   resultado: ResultadoPlano;
@@ -184,7 +184,9 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
       <div className="flex flex-col gap-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Mapa de Corte */}
-          <button
+          <Button
+            variant="outline"
+            size="plain"
             onClick={handleExportMapaPDF}
             disabled={isExporting}
             className="group flex flex-col items-start p-5 bg-foreground/5 border border-border/40 rounded-2xl hover:border-primary/50 hover:bg-foreground/10 transition-all text-left disabled:opacity-50"
@@ -198,10 +200,12 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
             <p className="text-sm text-muted-foreground mt-1">
               Escala 1:8 em formato A3 para montagem na fábrica.
             </p>
-          </button>
+          </Button>
 
           {/* Etiquetas */}
-          <button
+          <Button
+            variant="outline"
+            size="plain"
             onClick={handleExportEtiquetas}
             disabled={isExporting}
             className="group flex flex-col items-start p-5 bg-foreground/5 border border-border/40 rounded-2xl hover:border-primary/50 hover:bg-foreground/10 transition-all text-left disabled:opacity-50"
@@ -215,10 +219,12 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
             <p className="text-sm text-muted-foreground mt-1">
               Etiquetas 100x50mm com QR Code e informações industriais.
             </p>
-          </button>
+          </Button>
 
           {/* G-Code CNC */}
-          <button
+          <Button
+            variant="outline"
+            size="plain"
             onClick={handleExportGCode}
             disabled={isExporting || !activeSuperficie}
             className="group flex flex-col items-start p-5 bg-foreground/5 border border-border/40 rounded-2xl hover:border-primary/50 hover:bg-foreground/10 transition-all text-left disabled:opacity-50"
@@ -234,10 +240,12 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
                 ? `Chapa atual (Chapa ${activeChapaIdx + 1})`
                 : 'Selecione uma chapa no painel primeiro.'}
             </p>
-          </button>
+          </Button>
 
           {/* Lista de Produção (CSV) */}
-          <button
+          <Button
+            variant="outline"
+            size="plain"
             onClick={handleExportCSV}
             disabled={isExporting}
             className="group flex flex-col items-start p-5 bg-foreground/5 border border-border/40 rounded-2xl hover:border-primary/50 hover:bg-foreground/10 transition-all text-left disabled:opacity-50"
@@ -251,7 +259,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
             <p className="text-sm text-muted-foreground mt-1">
               Exportação bruta de peças para ERPs e planilhas externas.
             </p>
-          </button>
+          </Button>
         </div>
 
         {isExporting && (
