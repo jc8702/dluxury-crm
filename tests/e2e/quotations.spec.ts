@@ -133,6 +133,56 @@ test.describe('Modulo Orcamentos — formulário ponta a ponta (TSK-10)', () => 
       )
       .toBeTruthy();
   });
+
+  test('busca item no catalogo, adiciona ao orcamento e confirma que ficou salvo', async ({
+    page,
+  }) => {
+    await page.goto('/?id=quotation-e2e-001#/quotations');
+    await expect(page.getByText(/configurações comerciais/i).first()).toBeVisible({
+      timeout: 10000,
+    });
+
+    // O orçamento mockado começa vazio
+    await expect(page.getByText(/o orçamento está vazio/i)).toBeVisible();
+
+    // ── Etapa 1: buscar no catálogo unificado ──────────────────────────────
+    const busca = page.getByPlaceholder(/buscar módulo ou item de estoque/i);
+    await expect(busca).toBeVisible({ timeout: 10000 });
+    await busca.fill('parafuso');
+
+    // O debounce da busca chama ?action=search-skus e o dropdown mostra o item
+    await expect.poll(() => (captured['GET_SEARCH_SKUS'] || []).length, { timeout: 5000 }).toBe(1);
+    expect((captured['GET_SEARCH_SKUS'] as string[])[0]).toBe('parafuso');
+
+    const resultado = page.getByText('Parafuso 4x40', { exact: true });
+    await expect(resultado).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('PAR-440')).toBeVisible();
+
+    // ── Etapa 2: adicionar ao orçamento ───────────────────────────────────
+    await resultado.click();
+
+    await expect.poll(() => (captured['PUT_ADD_ITEM'] || []).length, { timeout: 5000 }).toBe(1);
+    const addItem = (captured['PUT_ADD_ITEM'] as Record<string, unknown>[])[0];
+    expect(addItem.skuId).toBe('42');
+    expect(Number(addItem.quantidade)).toBe(1);
+
+    // ── Etapa 3: o item aparece no orçamento (carregado do GET de detalhe) ─
+    await expect(page.getByRole('heading', { name: 'Parafuso 4x40' })).toBeVisible({
+      timeout: 5000,
+    });
+    await expect(page.getByText(/o orçamento está vazio/i)).not.toBeVisible();
+
+    // ── Etapa 4: segue salvo depois de recarregar a página ────────────────
+    const getsAntes = (captured['GET_QUOTATION_DETAIL'] || []).length;
+    await page.reload();
+
+    await expect(page.getByRole('heading', { name: 'Parafuso 4x40' })).toBeVisible({
+      timeout: 10000,
+    });
+    await expect
+      .poll(() => (captured['GET_QUOTATION_DETAIL'] || []).length, { timeout: 5000 })
+      .toBeGreaterThan(getsAntes);
+  });
 });
 
 // Mantém os testes de smoke originais

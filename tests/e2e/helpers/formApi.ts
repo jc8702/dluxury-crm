@@ -10,6 +10,8 @@ import type { Page } from '@playwright/test';
  * Endpoints cobertos:
  * - /api/clients  (GET lista, POST cria, PUT atualiza, DELETE remove)
  * - /api/quotations (GET lista/detalhe, POST cria rascunho, PUT atualiza header)
+ * - /api/quotations?action=search-skus (busca unificada: módulo/estoque/material)
+ * - /api/quotations?action=add-item    (adiciona item e persiste em `itens`)
  * - /api/auth, /api/dashboard, /api/notifications (dados de suporte)
  */
 export function setupFormApiMock(page: Page) {
@@ -60,10 +62,59 @@ export function setupFormApiMock(page: Page) {
 
     if (method === 'POST') record('POST_QUOTATION', payload);
     if (method === 'PUT' || method === 'PATCH') record('PUT_QUOTATION', payload);
+    if (/([?&])action=add-item/.test(url)) record('PUT_ADD_ITEM', payload);
 
     if (method === 'POST') {
       // inicializar() → retorna { id } e navega para ?id=...#/quotations
       await route.fulfill(ok(quotationMock()));
+      return;
+    }
+
+    // Busca unificada do catálogo (módulos de engenharia + estoque + materiais)
+    if (method === 'GET' && /([?&])action=search-skus/.test(url)) {
+      const termo = (new URL(url).searchParams.get('q') || '').trim().toLowerCase();
+      record('GET_SEARCH_SKUS', termo);
+      const data =
+        termo.length < 2
+          ? []
+          : catalogoMock().filter(
+              (i) => i.nome.toLowerCase().includes(termo) || i.codigo.toLowerCase().includes(termo),
+            );
+      await route.fulfill(ok(data));
+      return;
+    }
+
+    // Adicionar item ao orçamento: persiste em quotationState.itens para que o
+    // GET de detalhe seguinte devolva o item (igual ao servidor real).
+    if (method === 'PUT' && /([?&])action=add-item/.test(url)) {
+      const { skuId, quantidade } = (payload || {}) as { skuId?: string; quantidade?: number };
+      const sku = catalogoMock().find((i) => i.id === String(skuId));
+      const itens = quotationState.itens as Record<string, any>[];
+      const qtd = Number(quantidade) || 1;
+
+      if (sku) {
+        const existente = itens.find((i) => i.skuCodigo === sku.codigo);
+        if (existente) {
+          existente.quantidade = Number(existente.quantidade) + qtd;
+        } else {
+          itens.push({
+            id: `item-e2e-${itens.length + 1}`,
+            nomeCustomizado: sku.nome,
+            skuCodigo: sku.codigo,
+            skuDescricao: sku.nome,
+            quantidade: qtd,
+            unidadeMedida: 'UN',
+            origemDados: sku.origem,
+            custoUnitarioCalculado: sku.valor,
+            custoBaseEstoque: sku.valor,
+            precoVendaUnitario: Number((sku.valor * 1.3).toFixed(2)),
+            margemLucro: 30,
+            possuiOverride: false,
+          });
+        }
+      }
+
+      await route.fulfill(ok({}));
       return;
     }
 
@@ -109,6 +160,39 @@ export function clienteMock(overrides: Record<string, unknown> = {}) {
     criado_em: new Date().toISOString(),
     ...overrides,
   };
+}
+
+/**
+ * Catálogo devolvido por /api/quotations?action=search-skus.
+ * Espelha o shape real: { id, nome, codigo, valor, origem, tipo }.
+ */
+export function catalogoMock() {
+  return [
+    {
+      id: '42',
+      nome: 'Parafuso 4x40',
+      codigo: 'PAR-440',
+      valor: 0.35,
+      origem: 'ESTOQUE',
+      tipo: 'ITEM ESTOQUE',
+    },
+    {
+      id: '7',
+      nome: 'MDF 15mm Branco',
+      codigo: 'MDF-15',
+      valor: 120.5,
+      origem: 'ESTOQUE',
+      tipo: 'ITEM ESTOQUE',
+    },
+    {
+      id: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2',
+      nome: 'Armário Aéreo 2 Portas',
+      codigo: 'MOD-001',
+      valor: 1500,
+      origem: 'MODULO',
+      tipo: 'MÓDULO',
+    },
+  ];
 }
 
 export function quotationMock(overrides: Record<string, unknown> = {}) {
