@@ -173,6 +173,19 @@ const handleFinanceiroCore: TenantHandler = async (req, res) => {
     if (resource === 'test') {
       return await handleDiagnostic(req, res, tenantId);
     }
+    if (resource === 'billings') {
+      if (req.method !== 'GET') {
+        return res.status(405).json({ success: false, error: 'Método não permitido' });
+      }
+      const rows = await sql`
+        SELECT id, nf, pedido, cliente, erp, descricao, tipo, project_id, valor, data,
+               due_date, categoria, status, created_at
+        FROM billings
+        WHERE tenant_id = ${tenantId}::uuid
+        ORDER BY data DESC NULLS LAST, created_at DESC
+        LIMIT 500`;
+      return res.status(200).json({ success: true, data: rows });
+    }
 
     return res.status(404).json({ success: false, error: 'Recurso financeiro não encontrado' });
   } catch (err: any) {

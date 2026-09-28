@@ -107,7 +107,6 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
       });
     } catch (err) {
       console.error('Erro ao exportar PDF:', err);
-      window.open(`/api/quotations/export-pdf?id=${quotation.id}`, '_blank');
     }
   };
 

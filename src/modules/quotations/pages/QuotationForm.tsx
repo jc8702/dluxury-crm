@@ -31,6 +31,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useQuotation } from '../hooks/useQuotation';
+import { exportBudgetToPDF } from '../services/export-pdf';
 import { ImportarProjeto } from '../components/ImportarProjeto';
 import { ModalEnviarCliente } from '../components/ModalEnviarCliente';
 import { api } from '@/lib/api';
@@ -389,9 +390,14 @@ export default function QuotationForm() {
           <Button
             size="icon"
             variant="ghost"
-            onClick={(e) => {
+            onClick={async (e) => {
               e.stopPropagation();
-              window.open(`/api/quotations/export-pdf?id=${o.id}`, '_blank');
+              try {
+                const detalhe = await api.quotations.get(o.id);
+                exportBudgetToPDF(detalhe);
+              } catch (_err) {
+                toastError('Erro ao gerar o PDF do orçamento.');
+              }
             }}
             aria-label="Visualizar PDF"
             title="Visualizar PDF"
@@ -573,7 +579,13 @@ export default function QuotationForm() {
           <Button
             variant="outline"
             leftIcon={<FileDown size={16} />}
-            onClick={() => window.open(`/api/quotations/export-pdf?id=${quotation.id}`, '_blank')}
+            onClick={() => {
+              if (quotation) {
+                exportBudgetToPDF(quotation);
+              } else {
+                toastError('Carregue um orçamento antes de exportar o PDF.');
+              }
+            }}
           >
             Exportar PDF
           </Button>

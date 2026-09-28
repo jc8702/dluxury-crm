@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { api } from '../../lib/api';
 
 export function NotificacoesBadge() {
   const [count, setCount] = useState(0);
@@ -9,14 +10,9 @@ export function NotificacoesBadge() {
 
     async function buscar() {
       try {
-        const res = await fetch('/api?action=contar_nao_lidas', {
-          // Timeout de 5s para não travar o carregamento da UI
-          signal: AbortSignal.timeout(5000),
-        });
-        if (!res.ok) return;
-        const data = await res.json();
+        const total = await api.notificacoes.getCount();
         if (mountedRef.current) {
-          setCount(typeof data.total === 'number' ? data.total : 0);
+          setCount(typeof total === 'number' ? total : 0);
         }
       } catch (_err) {
         // Silencioso para não interromper a experiência do usuário

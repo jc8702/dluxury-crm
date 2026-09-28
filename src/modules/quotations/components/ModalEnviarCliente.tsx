@@ -40,8 +40,7 @@ export function ModalEnviarCliente({
         linkData.url_aprovacao || `${window.location.origin}/#/aprovar/${linkData.token_aprovacao}`;
 
       if (method === 'whatsapp') {
-        const urlPdf = `${window.location.origin}/api/quotations/export-pdf?id=${quotation.id}`;
-        const text = `Olá! Segue a proposta comercial D'Luxury para o seu projeto: ${quotation.numeroOrcamento || quotation.numero}\n\nValor Total: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(quotation.valorTotalVenda)}\n\nBaixar PDF da Proposta: ${urlPdf}\n\nVisualizar e Assinar Proposta: ${urlAprovacao}`;
+        const text = `Olá! Segue a proposta comercial D'Luxury para o seu projeto: ${quotation.numeroOrcamento || quotation.numero}\n\nValor Total: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(quotation.valorTotalVenda)}\n\nVisualizar proposta, baixar PDF e assinar: ${urlAprovacao}`;
         const phone = quotation.cliente?.telefone || '';
         window.open(
           `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`,

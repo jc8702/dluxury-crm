@@ -163,7 +163,6 @@ export const api = {
     realize: (id: string, resultado: string) =>
       apiCall<any>(`agenda?id=${id}&action=realizar`, 'PATCH', { resultado_visita: resultado }),
     delete: (id: string) => apiCall<any>(`agenda?id=${id}`, 'DELETE'),
-    syncVisitas: () => apiCall<any>('agenda?action=sincronizar', 'POST'),
   },
   notificacoes: {
     list: (unreadOnly = false) => apiCall<any[]>(`notificacoes?unread=${unreadOnly}`),

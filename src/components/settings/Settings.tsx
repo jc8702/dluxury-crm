@@ -778,9 +778,9 @@ const TechnicalPricingSection: React.FC = () => {
             type="number"
             step="0.01"
             label="Margem de Alerta Mínima (%)"
-            value={config?.margem_minima_alerta ? config.margem_minima_alerta * 100 : 25}
+            value={config?.margem_minima_alerta ?? 25}
             onChange={(e) =>
-              setConfig({ ...config!, margem_minima_alerta: Number(e.target.value) / 100 })
+              setConfig({ ...config!, margem_minima_alerta: Number(e.target.value) })
             }
           />
           <Input
@@ -794,18 +794,18 @@ const TechnicalPricingSection: React.FC = () => {
             type="number"
             step="0.01"
             label="M.O. Produção (% do material)"
-            value={config?.mo_producao_pct_padrao ? config.mo_producao_pct_padrao * 100 : 30}
+            value={config?.mo_producao_pct_padrao ?? 30}
             onChange={(e) =>
-              setConfig({ ...config!, mo_producao_pct_padrao: Number(e.target.value) / 100 })
+              setConfig({ ...config!, mo_producao_pct_padrao: Number(e.target.value) })
             }
           />
           <Input
             type="number"
             step="0.01"
             label="M.O. Instalação (% do material)"
-            value={config?.mo_instalacao_pct_padrao ? config.mo_instalacao_pct_padrao * 100 : 15}
+            value={config?.mo_instalacao_pct_padrao ?? 15}
             onChange={(e) =>
-              setConfig({ ...config!, mo_instalacao_pct_padrao: Number(e.target.value) / 100 })
+              setConfig({ ...config!, mo_instalacao_pct_padrao: Number(e.target.value) })
             }
           />
         </div>

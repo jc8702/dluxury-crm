@@ -258,6 +258,10 @@ export default async function handler(req: any, res: any) {
       const { handleQuotations } = await import('../src/api-lib/quotations.js');
       return await handleQuotations(req, res);
     }
+    if (cleanUrl.startsWith('/api/quotation-tecnico')) {
+      const { handleQuotationTecnico } = await import('../src/api-lib/quotation-tecnico.js');
+      return await handleQuotationTecnico(req, res);
+    }
     if (cleanUrl.startsWith('/api/orcamentos/export-pdf')) {
       const { default: handler } = await import('./orcamentos/exportar-pdf.js');
       return await handler(req, res);

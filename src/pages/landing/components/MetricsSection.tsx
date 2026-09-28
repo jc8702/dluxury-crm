@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { MetricCard } from './MetricCard';
 import styles from '../landing.module.css';
 
@@ -9,28 +9,11 @@ interface Metrics {
 }
 
 export const MetricsSection: React.FC = () => {
-  const [metrics, setMetrics] = useState<Metrics>({
+  const metrics: Metrics = {
     vendas: 148500,
     ordensProducao: 8,
     aproveitamento: 87.4,
-  });
-
-  useEffect(() => {
-    const fetchMetrics = async () => {
-      try {
-        const res = await fetch('/api/dashboard');
-        if (res.ok) {
-          const data = await res.json();
-          setMetrics(data);
-        }
-      } catch (err) {
-        console.error('Erro ao buscar métricas:', err);
-        // Usar defaults
-      }
-    };
-
-    fetchMetrics();
-  }, []);
+  };
 
   return (
     <section className={styles.metrics}>

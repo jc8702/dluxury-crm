@@ -2,11 +2,19 @@
 
 ## Informações Gerais
 
-- **Status Atual:** Sprints 1 e 2 concluídas; auditoria cruzada executada e **plano aprovado concluído**: TSK-12/13/14/15/16/17 **concluídas** (itens A e B da auditoria resolvidos). E2E **186 passed / 0 failed** (inclui regressão visual de 39 rotas + 11 testes de inserção).
+- **Status Atual:** Sprints 1 e 2 concluídas; auditoria cruzada executada e **plano aprovado concluído**: TSK-12/13/14/15/16/17 **concluídas** (itens A e B da auditoria resolvidos); **banco de produção recuperado (91/91 tabelas, origem = destino)** e **6 telas/rotas quebradas corrigidas (TSK-18/19/20)**. E2E **186 passed / 0 failed** (inclui regressão visual de 39 rotas + 11 testes de inserção).
 - **Objetivo Central:** Garantir funcionamento perfeito de todas as funcionalidades (especialmente inserção de dados) e unificar o padrão visual/design (Padrão Diamante) em todas as páginas.
 - **Última Atualização:** 27/09/2026
 
 ## Histórico de Alterações
+
+- **[27/09/2026 - Recuperação de banco + TSK-18/19/20 (telas quebradas)]:** produção passou a ter todos os dados e as 6 telas apontadas voltaram a funcionar.
+  - **Banco origem → produção:** 6 tabelas ausentes criadas (`erp_skus`, `materiais`, `clientes`, `fechamentos_financeiros`, `pedidos_compra`, `pedido_compra_itens`) + sequences com `setval`, 7 colunas adicionadas (`notificacoes.updated_at`, `ordens_producao.quotation_id/deleted_at/tenant_id`, `quotations.token_expira_em`, `users.token_version/ativo`) e ~370 linhas copiadas por PK (`scratch/db-sync.cjs --apply`, ordem FK, `ON CONFLICT DO NOTHING`); verificação final **91/91 tabelas e origem = destino em todas as contagens** (linhas que já eram maiores no destino intocadas). Migração versionada `drizzle/0018_create_configuracoes_precificacao.sql` + DDL em `_init.ts`.
+  - **TSK-18 (PDF de orçamento):** `/api/quotations/export-pdf` devolvia JSON e `/api/orcamentos/export-pdf` respondia 410 → botões de `QuotationForm`/`QuotationDetail` agora usam `exportBudgetToPDF` (jsPDF client-side) e o WhatsApp do `ModalEnviarCliente` usa o link público de aprovação (download do PDF + assinatura).
+  - **TSK-19 (Precificação Técnica em Configurações):** `/api/quotation-tecnico` não existia (404) e a tabela `configuracoes_precificacao` — consultada por `recalcularOrcamento` — **não existia em nenhum dos dois bancos** → tabela criada + handler novo (`src/api-lib/quotation-tecnico.ts`, GET cria row com defaults / PATCH faz merge) + rota; semântica de percentual unificada (30 = 30%) corrigindo os `*100`/`/100` divergentes no `Settings.tsx`.
+  - **TSK-20 (demais rotas):** badge de notificações migrado para `api.notificacoes.getCount()` (antes sem token e campo errado); `GET /api/billings` ganhou resource no `financeiro.ts` (antes 404); `MetricsSection` deixou de chamar `/api/dashboard` inexistente; `api.agenda.syncVisitas` (morte, sem chamadores) removida.
+  - **Validação:** `tsc` 0 erros; `eslint .` 0 erros / 161 warnings; `vitest run` **728 passed / 23 skipped / 0 failed**; `vite build` OK; `npx playwright test` **186 passed / 0 failed**; smoke test manual dos endpoints novos (200/501 corretos).
+  - **Arquivos novos/modificados:** `drizzle/0018_create_configuracoes_precificacao.sql`, `src/api-lib/quotation-tecnico.ts`, `api/index.ts`, `src/api-lib/{_init,financeiro}.ts`, `src/lib/api.ts`, `src/components/{layout/NotificacoesBadge,settings/Settings}.tsx`, `src/modules/quotations/{pages/QuotationForm,components/ModalEnviarCliente}.tsx`, `src/pages/Quotations/QuotationDetail.tsx`, `src/pages/landing/components/MetricsSection.tsx` + docs.
 
 - **[27/09/2026 - TSK-17 concluída]:** padrão consolidado de formulários (item B remanescente da auditoria).
   - **Novos `ui/FormActions` e `ui/BackButton`:** rodapé padrão (Cancelar `outline` + Salvar `primary`/`isLoading`, secundárias em `left`, `onSubmit` para modais sem `<form>`) e voltar padrão (também no `layout/Header` via `onBack`/`backLabel`).
