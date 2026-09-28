@@ -112,6 +112,9 @@ export const api = {
     create: (data: any) => apiCall<any>('quotations', 'POST', data),
     update: (id: string, data: any) => apiCall<any>(`quotations?id=${id}`, 'PATCH', data),
     delete: (id: string) => apiCall<any>(`quotations?id=${id}`, 'DELETE'),
+    // Busca unificada do catálogo: módulos de engenharia + itens de estoque + materiais
+    searchSkus: (q: string) =>
+      apiCall<any[]>(`quotations?action=search-skus&q=${encodeURIComponent(q)}`),
   },
   projects: {
     list: () => apiCall<any[]>('projects'),

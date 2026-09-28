@@ -390,6 +390,9 @@ const handleEngineeringCore: TenantHandler = async (req, res) => {
     }
 
     if (req.method === 'GET') {
+      // Listagem de módulos de engenharia (usada pela Engenharia de Produto).
+      // A busca unificada (módulo + estoque + material) do orçamento vive em
+      // /api/quotations?action=search-skus, para não quebrar o shape esperado aqui.
       const term = req.query.q as string;
       let result;
 

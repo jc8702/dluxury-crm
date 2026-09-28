@@ -194,12 +194,14 @@ export function useQuotation(orcamentoId?: string) {
         const result = await response.json();
         if (result.success) {
           await carregar(orcamentoId);
+        } else {
+          toastError(result.error || 'Erro ao adicionar item ao orçamento');
         }
       } catch (err) {
         console.error('❌ [useQuotation] Erro ao adicionar item:', err);
       }
     },
-    [orcamentoId, carregar],
+    [orcamentoId, carregar, toastError],
   );
 
   // ✅ ATUALIZAR ITEM

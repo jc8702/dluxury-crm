@@ -52,6 +52,16 @@ const validators = {
   },
 };
 
+/**
+ * Normaliza o retorno de uma query crua (`db.execute` devolve `{ rows }`, mocks podem devolver
+ * o array direto ou `undefined`).
+ */
+function toRows<T = any>(result: any): T[] {
+  if (!result) return [];
+  if (Array.isArray(result)) return result as T[];
+  return (result.rows as T[]) || [];
+}
+
 // Tipos para validação de payloads
 interface CreateOrcamentoPayload {
   header: {
@@ -533,18 +543,20 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
       }
 
       if (action === 'search-skus') {
-        const query = url.searchParams.get('q') || '';
+        const query = (url.searchParams.get('q') || '').trim();
         const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
 
         if (query.length < 2) {
           return res.status(200).json({ success: true, data: [] });
         }
 
-        logger.debug(`🔍 Buscando SKUs para: "${query}"`);
+        logger.debug(`🔍 Buscando itens do catálogo para: "${query}"`);
 
         try {
-          // Executar buscas em paralelo
-          const [comps, engs] = await Promise.all([
+          const like = `%${query}%`;
+
+          // Buscas em paralelo: SKUs clássicos + catálogo real (módulos, estoque, materiais)
+          const [comps, engs, modulos, estoque, materiais] = await Promise.all([
             db
               .select({
                 id: skuComponente.id,
@@ -556,10 +568,7 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
               .where(
                 and(
                   eq(skuComponente.tenantId, tenantId),
-                  or(
-                    ilike(skuComponente.codigo, `%${query}%`),
-                    ilike(skuComponente.nome, `%${query}%`),
-                  ),
+                  or(ilike(skuComponente.codigo, like), ilike(skuComponente.nome, like)),
                 ),
               )
               .limit(limit),
@@ -574,27 +583,69 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
               .where(
                 and(
                   eq(skuEngenharia.tenantId, tenantId),
-                  or(
-                    ilike(skuEngenharia.codigo, `%${query}%`),
-                    ilike(skuEngenharia.nome, `%${query}%`),
-                  ),
+                  or(ilike(skuEngenharia.codigo, like), ilike(skuEngenharia.nome, like)),
                 ),
               )
               .limit(limit),
+
+            // Módulos de engenharia (erp_product_bom)
+            db.execute(dsql`
+              SELECT id::text AS id, COALESCE(nome, '') AS nome,
+                COALESCE(codigo_modelo, '') AS codigo,
+                COALESCE(valor_total, 0)::float8 AS valor,
+                'MODULO' AS origem, 'MÓDULO' AS tipo
+              FROM erp_product_bom
+              WHERE tenant_id = ${tenantId}::uuid
+                AND (COALESCE(nome, '') ILIKE ${like} OR COALESCE(codigo_modelo, '') ILIKE ${like})
+              ORDER BY nome ASC
+              LIMIT ${limit}`),
+
+            // Itens de estoque do Setup Engenharia (estoque_materiais_detalhado)
+            db.execute(dsql`
+              SELECT id::text AS id, descricao AS nome, COALESCE(sku_codigo, '') AS codigo,
+                COALESCE(preco_custo_unitario, preco_custo, 0)::float8 AS valor,
+                'ESTOQUE' AS origem, 'ITEM ESTOQUE' AS tipo
+              FROM estoque_materiais_detalhado
+              WHERE tenant_id = ${tenantId}::uuid AND ativo = true
+                AND (COALESCE(descricao, '') ILIKE ${like} OR COALESCE(sku_codigo, '') ILIKE ${like})
+              ORDER BY descricao ASC
+              LIMIT ${limit}`),
+
+            // Materiais da página de Estoque (materiais)
+            db.execute(dsql`
+              SELECT id::text AS id, COALESCE(nome, '') AS nome, COALESCE(sku, '') AS codigo,
+                COALESCE(preco_venda, preco_custo, 0)::float8 AS valor,
+                'MATERIAL' AS origem, 'MATERIAL' AS tipo
+              FROM materiais
+              WHERE tenant_id = ${tenantId}::uuid AND ativo = true
+                AND (COALESCE(nome, '') ILIKE ${like} OR COALESCE(sku, '') ILIKE ${like})
+              ORDER BY nome ASC
+              LIMIT ${limit}`),
           ]);
 
-          const results = [
+          const direto = [
             ...comps.map((c: any) => ({
-              ...c,
-              precoUnitario: Number(c.precoUnitario || 0),
+              id: c.id,
+              codigo: c.codigo,
+              nome: c.nome,
+              valor: Number(c.precoUnitario || 0),
+              origem: 'COMPONENTE',
               tipo: 'COMPONENTE',
             })),
             ...engs.map((e: any) => ({
-              ...e,
-              precoUnitario: 0,
+              id: e.id,
+              codigo: e.codigo,
+              nome: e.nome,
+              valor: 0,
+              origem: 'ENGENHARIA',
               tipo: 'ENGENHARIA',
             })),
+            ...toRows(modulos),
+            ...toRows(estoque),
+            ...toRows(materiais),
           ];
+
+          const results = direto.map((r: any) => ({ ...r, valor: Number(r.valor) || 0 }));
 
           logger.debug(`✅ ${results.length} resultados encontrados`);
           return res.status(200).json({ success: true, data: results });
@@ -866,10 +917,17 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
             const { skuId, quantidade } = req.body;
 
             await db.transaction(async (tx: any) => {
+              // sku_engenharia/sku_componente usam uuid; estoque/materiais usam id inteiro/texto
+              const ehUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+                String(skuId),
+              );
+
               // Verificar se é um módulo (Engenharia)
-              const isEng = await tx.query.skuEngenharia.findFirst({
-                where: and(eq(skuEngenharia.id, skuId), eq(skuEngenharia.tenantId, tenantId)),
-              });
+              const isEng = ehUuid
+                ? await tx.query.skuEngenharia.findFirst({
+                    where: and(eq(skuEngenharia.id, skuId), eq(skuEngenharia.tenantId, tenantId)),
+                  })
+                : null;
 
               if (isEng) {
                 const [newItem] = await tx
@@ -896,9 +954,11 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
                 }
               } else {
                 // Verificar se é um componente (Estoque)
-                const isComp = await tx.query.skuComponente.findFirst({
-                  where: and(eq(skuComponente.id, skuId), eq(skuComponente.tenantId, tenantId)),
-                });
+                const isComp = ehUuid
+                  ? await tx.query.skuComponente.findFirst({
+                      where: and(eq(skuComponente.id, skuId), eq(skuComponente.tenantId, tenantId)),
+                    })
+                  : null;
                 if (isComp) {
                   const [newItem] = await tx
                     .insert(quotationItems)
@@ -918,6 +978,81 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
                     custoUnitario: isComp.precoUnitario?.toString() || '0',
                     origem: 'DIRECT',
                   });
+                } else {
+                  // Módulo de engenharia (erp_product_bom)
+                  const modRes: any = await tx.execute(dsql`
+                    SELECT id::text, nome, codigo_modelo,
+                      COALESCE(valor_total, 0)::float8 AS valor_total
+                    FROM erp_product_bom
+                    WHERE id::text = ${String(skuId)} AND tenant_id = ${tenantId}::uuid`);
+                  const modulo = ((modRes && modRes.rows) || modRes || [])[0];
+
+                  // Item de estoque cadastrado em Setup Engenharia (estoque_materiais_detalhado)
+                  const estRes: any = await tx.execute(dsql`
+                    SELECT id::text, descricao, sku_codigo, unidade_medida,
+                      COALESCE(preco_custo_unitario, preco_custo, 0)::float8 AS custo
+                    FROM estoque_materiais_detalhado
+                    WHERE id::text = ${String(skuId)} AND tenant_id = ${tenantId}::uuid AND ativo = true`);
+                  const estoqueItem = ((estRes && estRes.rows) || estRes || [])[0];
+
+                  // Material da página de Estoque (materiais)
+                  const matRes: any = await tx.execute(dsql`
+                    SELECT id::text, nome, sku, unidade_uso,
+                      COALESCE(preco_custo, 0)::float8 AS custo,
+                      COALESCE(preco_venda, 0)::float8 AS preco_venda
+                    FROM materiais
+                    WHERE id::text = ${String(skuId)} AND tenant_id = ${tenantId}::uuid AND ativo = true`);
+                  const material = ((matRes && matRes.rows) || matRes || [])[0];
+
+                  if (modulo) {
+                    const precoModulo = Number(modulo.valor_total) || 0;
+                    await tx.insert(quotationItems).values({
+                      quotationId: id,
+                      nomeCustomizado: modulo.nome,
+                      skuCodigo: modulo.codigo_modelo,
+                      skuDescricao: modulo.nome,
+                      quantidade: String(quantidade || 1),
+                      unidadeMedida: 'UN',
+                      origemDados: 'MODULO',
+                      possuiOverride: precoModulo > 0,
+                      precoVendaSobrescrito: precoModulo > 0 ? String(precoModulo) : null,
+                      tenantId,
+                    });
+                  } else if (estoqueItem) {
+                    const custoEstoque = Number(estoqueItem.custo) || 0;
+                    await tx.insert(quotationItems).values({
+                      quotationId: id,
+                      nomeCustomizado: estoqueItem.descricao,
+                      skuCodigo: estoqueItem.sku_codigo,
+                      skuDescricao: estoqueItem.descricao,
+                      quantidade: String(quantidade || 1),
+                      unidadeMedida: estoqueItem.unidade_medida || 'UN',
+                      custoUnitarioCalculado: String(custoEstoque),
+                      custoBaseEstoque: String(custoEstoque),
+                      origemDados: 'ESTOQUE',
+                      tenantId,
+                    });
+                  } else if (material) {
+                    const custoMaterial = Number(material.custo) || 0;
+                    const precoVendaMaterial = Number(material.preco_venda) || 0;
+                    await tx.insert(quotationItems).values({
+                      quotationId: id,
+                      nomeCustomizado: material.nome,
+                      skuCodigo: material.sku,
+                      skuDescricao: material.nome,
+                      quantidade: String(quantidade || 1),
+                      unidadeMedida: material.unidade_uso || 'UN',
+                      custoUnitarioCalculado: String(custoMaterial),
+                      custoBaseEstoque: String(custoMaterial),
+                      possuiOverride: precoVendaMaterial > 0,
+                      precoVendaSobrescrito:
+                        precoVendaMaterial > 0 ? String(precoVendaMaterial) : null,
+                      origemDados: 'MATERIAL',
+                      tenantId,
+                    });
+                  } else {
+                    throw new ValidationError('SKU não encontrado no catálogo deste tenant');
+                  }
                 }
               }
             });

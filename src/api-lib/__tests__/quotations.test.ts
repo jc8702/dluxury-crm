@@ -84,6 +84,25 @@ function mockReq(overrides: any = {}): any {
   };
 }
 
+function mockRes() {
+  let sc = 200,
+    jd: any = null;
+  const self: any = {
+    status: (c: number) => {
+      sc = c;
+      return self;
+    },
+    json: (d: any) => {
+      jd = d;
+      return self;
+    },
+    end: () => self,
+    _s: () => sc,
+    _d: () => jd,
+  };
+  return self;
+}
+
 describe('Módulo de Orçamentos PRO', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -520,25 +539,6 @@ describe('Módulo de Orçamentos PRO', () => {
   });
 
   describe('Fluxos Avançados de GET, PUT e DELETE', () => {
-    function mockRes() {
-      let sc = 200,
-        jd: any = null;
-      const self: any = {
-        status: (c: number) => {
-          sc = c;
-          return self;
-        },
-        json: (d: any) => {
-          jd = d;
-          return self;
-        },
-        end: () => self,
-        _s: () => sc,
-        _d: () => jd,
-      };
-      return self;
-    }
-
     let mockTxPadrao: any;
 
     beforeEach(() => {
@@ -921,6 +921,100 @@ describe('Módulo de Orçamentos PRO', () => {
       await handleQuotations(req, res);
       expect(res._s()).toBe(200);
       expect(res._d().data.success).toBe(1);
+    });
+  });
+
+  describe('Busca unificada de itens do catálogo', () => {
+    const dialect = new PgDialect();
+
+    function sqlToString(query: any): string {
+      if (typeof query === 'string') return query;
+      if (!query) return '';
+      try {
+        return dialect.sqlToQuery(query).sql;
+      } catch {
+        return String(query);
+      }
+    }
+
+    beforeEach(() => {
+      vi.mocked(db.select).mockReturnValue(db as any);
+      vi.mocked(db.from).mockReturnValue(db as any);
+      vi.mocked(db.where).mockReturnValue(db as any);
+      vi.mocked(db.limit).mockResolvedValue([]);
+    });
+
+    it('deve retornar módulos, itens de estoque e materiais normalizados', async () => {
+      vi.mocked(db.execute).mockImplementation(async (query: any) => {
+        const raw = sqlToString(query);
+        if (raw.includes('FROM erp_product_bom')) {
+          return {
+            rows: [
+              {
+                id: 'mod-1',
+                nome: 'Armário Aéreo',
+                codigo: 'MOD-001',
+                valor: '1500',
+                origem: 'MODULO',
+                tipo: 'MÓDULO',
+              },
+            ],
+          } as any;
+        }
+        if (raw.includes('FROM estoque_materiais_detalhado')) {
+          return {
+            rows: [
+              {
+                id: '7',
+                nome: 'MDF 15mm',
+                codigo: 'MDF-15',
+                valor: '120.5',
+                origem: 'ESTOQUE',
+                tipo: 'ITEM ESTOQUE',
+              },
+            ],
+          } as any;
+        }
+        if (raw.includes('FROM materiais')) {
+          return {
+            rows: [
+              {
+                id: 'mat-1',
+                nome: 'Parafuso 4x40',
+                codigo: 'PAR-440',
+                valor: '0.35',
+                origem: 'MATERIAL',
+                tipo: 'MATERIAL',
+              },
+            ],
+          } as any;
+        }
+        return { rows: [] } as any;
+      });
+
+      const req = mockReq({
+        method: 'GET',
+        url: '/api/quotations?action=search-skus&q=parafuso',
+      });
+      const res = mockRes();
+      await handleQuotations(req, res);
+
+      expect(res._s()).toBe(200);
+      const data = res._d().data;
+      expect(data).toHaveLength(3);
+      expect(data.map((d: any) => d.origem)).toEqual(['MODULO', 'ESTOQUE', 'MATERIAL']);
+      expect(data[0].valor).toBe(1500);
+      expect(data[2]).toMatchObject({ nome: 'Parafuso 4x40', valor: 0.35 });
+    });
+
+    it('deve ignorar termos com menos de 2 caracteres', async () => {
+      const req = mockReq({ method: 'GET', url: '/api/quotations?action=search-skus&q=p' });
+      const res = mockRes();
+      await handleQuotations(req, res);
+
+      expect(res._s()).toBe(200);
+      expect(res._d().data).toEqual([]);
+      expect(db.execute).not.toHaveBeenCalled();
     });
   });
 });

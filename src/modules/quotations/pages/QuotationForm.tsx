@@ -60,6 +60,13 @@ const STATUS_LABEL: Record<string, string> = {
   EXPIRADO: 'Expirado',
 };
 
+// Origem dos itens retornados pela busca unificada do catálogo
+const ORIGEM_TONE: Record<string, 'primary' | 'info' | 'neutral'> = {
+  MODULO: 'primary',
+  ESTOQUE: 'info',
+  MATERIAL: 'info',
+};
+
 function formatDate(value: string | number | Date | undefined | null): string {
   if (!value) return '—';
   const d = new Date(value);
@@ -196,10 +203,9 @@ export default function QuotationForm() {
     }
   }, [pagination.page, pagination.limit, searchQuery]);
 
-  // Carga inicial de clientes/skus e flag de importação
+  // Carga inicial de clientes e flag de importação
   useEffect(() => {
     api.clients.list().then(setClients).catch(console.error);
-    api.engineering.list().then(setSkus).catch(console.error);
 
     const isImporting = getImportFlagFromUrl();
     if (isImporting && orcamentoId) {
@@ -218,15 +224,23 @@ export default function QuotationForm() {
     fetchRecentes();
   }, [fetchRecentes]);
 
+  // Busca unificada do catálogo: módulos de engenharia + itens de estoque + materiais
   useEffect(() => {
-    if (searchTerm.length > 2) {
-      const timer = setTimeout(() => {
-        api.engineering.list({ q: searchTerm }).then(setSkus).catch(console.error);
-      }, 300);
-      return () => clearTimeout(timer);
-    } else if (searchTerm.length === 0) {
-      api.engineering.list().then(setSkus).catch(console.error);
+    const term = searchTerm.trim();
+    if (term.length < 2) {
+      setSkus([]);
+      return;
     }
+    const timer = setTimeout(() => {
+      api.quotations
+        .searchSkus(term)
+        .then((items) => setSkus(items || []))
+        .catch((err) => {
+          console.error('Erro ao buscar itens do catálogo:', err);
+          setSkus([]);
+        });
+    }, 300);
+    return () => clearTimeout(timer);
   }, [searchTerm]);
 
   const handleUpdateHeader = async (updates: any) => {
@@ -742,7 +756,7 @@ export default function QuotationForm() {
             <div className="relative w-full sm:w-96">
               <Input
                 leftIcon={<Search size={16} />}
-                placeholder="BUSCAR SKU DE ENGENHARIA..."
+                placeholder="BUSCAR MÓDULO OU ITEM DE ESTOQUE..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -750,7 +764,7 @@ export default function QuotationForm() {
                 <div className="absolute top-full right-0 mt-2 w-full bg-[var(--ui-surface)] border border-[var(--ui-border)] rounded-[var(--ui-radius-lg)] shadow-[var(--ui-shadow-3)] z-[var(--ui-z-modal)] overflow-hidden max-h-[400px] overflow-y-auto">
                   {skus.length === 0 ? (
                     <div className="p-6 text-center text-[var(--ui-text-secondary)] text-sm italic">
-                      Nenhum SKU encontrado para "{searchTerm}"
+                      Nenhum item encontrado para "{searchTerm}"
                     </div>
                   ) : (
                     skus.map((sku) => (
@@ -767,7 +781,7 @@ export default function QuotationForm() {
                       >
                         <div className="flex flex-col gap-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <Badge tone={sku.origem === 'MODULO' ? 'primary' : 'neutral'} size="sm">
+                            <Badge tone={ORIGEM_TONE[sku.origem] ?? 'neutral'} size="sm">
                               {sku.origem}
                             </Badge>
                             <span className="text-sm font-semibold text-[var(--ui-text-primary)] group-hover:text-[var(--ui-action-secondary-fg)] truncate">
@@ -804,7 +818,7 @@ export default function QuotationForm() {
                 O orçamento está vazio
               </p>
               <p className="text-[var(--ui-text-secondary)] text-sm mt-2">
-                Utilize a busca acima para adicionar módulos de engenharia.
+                Utilize a busca acima para adicionar módulos de engenharia e itens de estoque.
               </p>
             </div>
           ) : (
