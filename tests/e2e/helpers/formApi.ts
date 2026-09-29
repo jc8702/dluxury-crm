@@ -15,13 +15,19 @@ import type { Page } from '@playwright/test';
  * - /api/agenda, /api/projects (carga do CRM no `reloadCRMData`)
  * - /api/auth, /api/dashboard, /api/notifications (dados de suporte)
  */
-export function setupFormApiMock(page: Page) {
+export function setupFormApiMock(
+  page: Page,
+  overrides: { quotation?: Record<string, unknown> } = {},
+) {
   const captured: Record<string, unknown[]> = {};
 
   // Estado "persistido" do orçamento mockado: os PUTs mesclam aqui e os GETs
   // devolvem este estado — igual a um servidor real. Isso evita corridas em que
   // o reload pós-PUT desfaz edições ainda não refletidas.
-  const quotationState: Record<string, unknown> = { ...quotationMock() };
+  const quotationState: Record<string, unknown> = {
+    ...quotationMock(),
+    ...(overrides.quotation || {}),
+  };
 
   const record = (method: string, payload: unknown) => {
     captured[method] = captured[method] || [];
@@ -108,14 +114,42 @@ export function setupFormApiMock(page: Page) {
             origemDados: sku.origem,
             custoUnitarioCalculado: sku.valor,
             custoBaseEstoque: sku.valor,
-            precoVendaUnitario: Number((sku.valor * 1.3).toFixed(2)),
-            margemLucro: 30,
+            // O servidor entrega preço = custo × MK (markup padrão do tenant = 1.5)
+            markup: 1.5,
+            precoVendaUnitario: Number((sku.valor * 1.5).toFixed(2)),
+            margemLucro: 50,
             possuiOverride: false,
           });
         }
       }
 
       await route.fulfill(ok({}));
+      return;
+    }
+
+    if (method === 'PUT' && /([?&])action=apply-global-markup/.test(url)) {
+      const { markup } = (payload || {}) as { markup?: number };
+      record('PUT_APPLY_MARKUP', payload);
+
+      // Espelha a regra do servidor: só itens SEM preço fixo recebem o MK
+      const itens = (quotationState.itens || []) as Record<string, any>[];
+      let aplicados = 0;
+      itens.forEach((item) => {
+        if (!item.possuiOverride) {
+          item.markup = Number(markup);
+          aplicados += 1;
+        }
+      });
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          message: `MK ${markup}x aplicado a ${aplicados} de ${itens.length} itens`,
+          data: { aplicados },
+        }),
+      });
       return;
     }
 

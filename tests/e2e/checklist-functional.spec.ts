@@ -211,43 +211,49 @@ test.describe('Checklist Funcional — Orçamentos (Quotations)', () => {
 
   test('Cálculo de valores matematicamente correto', async ({ page }) => {
     // Validação unitária da lógica de cálculo (recalculatePrices)
-    // Dados de teste: custo 100, margem 30% → preço 130
+    // Dados de teste: custo 100 com MK 3 → preço 300 (preço = custo × MK)
     const result = await page.evaluate(() => {
-      // Reimplementa lógica de src/utils/calculations.ts:42 recalculatePrices
+      // Reimplementa lógica de src/utils/calculations.ts recalculatePrices
       function recalculatePrices(
-        type: 'cost' | 'price' | 'margin',
+        type: 'cost' | 'price' | 'markup',
         value: number,
         currentDraft: any,
       ) {
         const cost = type === 'cost' ? value : currentDraft.custoUnitarioCalculado || 0;
+        const currentMarkup = currentDraft.markup > 0 ? currentDraft.markup : 1.5;
         let price = type === 'price' ? value : currentDraft.precoVendaUnitario || 0;
-        let margin = type === 'margin' ? value : currentDraft.margemLucro || 0;
-        if (type === 'margin') price = cost * (1 + value / 100);
-        else if (type === 'price') margin = cost > 0 ? (price / cost - 1) * 100 : 0;
-        else if (type === 'cost') price = cost * (1 + margin / 100);
-        return { cost, price, margin };
+        let markup = currentMarkup;
+        if (type === 'markup') {
+          markup = value;
+          price = cost * value;
+        } else if (type === 'price') {
+          markup = cost > 0 ? value / cost : 0;
+        } else {
+          price = cost * currentMarkup;
+        }
+        const margin = cost > 0 ? (price / cost - 1) * 100 : 0;
+        return { cost, price, margin, markup };
       }
       const custo = 100;
-      const margem = 30;
-      const r = recalculatePrices('margin', margem, {
+      const r = recalculatePrices('markup', 3, {
         custoUnitarioCalculado: custo,
         precoVendaUnitario: 0,
-        margemLucro: 0,
+        markup: 1.5,
       });
-      // Manual: 100 * 1.3 = 130
-      const expectedPrice = 130;
+      // Manual: 100 * 3 = 300
+      const expectedPrice = 300;
       const subtotal = 2 * r.price; // 2 unidades
       return {
         computedPrice: r.price,
         expectedPrice,
         subtotal,
-        expectedSubtotal: 260,
-        ok: r.price === expectedPrice && subtotal === 260,
+        expectedSubtotal: 600,
+        ok: r.price === expectedPrice && subtotal === 600,
       };
     });
     expect(result.ok).toBeTruthy();
-    expect(result.computedPrice).toBe(130);
-    expect(result.subtotal).toBe(260);
+    expect(result.computedPrice).toBe(300);
+    expect(result.subtotal).toBe(600);
 
     // Verifica que a página exibe campos de cálculo sem crash
     await page.goto('/#/quotations', { waitUntil: 'networkidle' });

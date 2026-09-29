@@ -143,6 +143,10 @@ export async function runInitDB() {
   // [PROMPT 2 - 2026-06-04] ALTER TABLE quotations* REMOVIDOS: tabelas quotations, itens_orcamento,
   //   orcamento_ambientes, orcamento_moveis, orcamento_pecas, orcamento_ferragens, orcamento_custos_extras
   //   foram DROPPADAS em PROMPT 1. Schema canonico agora e `quotations` (Drizzle).
+  // Markup por item do orçamento (multiplicador: preço de venda = custo × MK).
+  // A coluna existia apenas no schema Drizzle — nenhuma migration a criava, então
+  // o recálculo de orçamento não podia usá-la.
+  await safeSql(sql`ALTER TABLE quotation_items ADD COLUMN IF NOT EXISTS markup NUMERIC(10,4)`);
   await safeSql(sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS visita_id TEXT`);
   await safeSql(sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS quotation_id TEXT`);
   await safeSql(sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS visita_id TEXT`);

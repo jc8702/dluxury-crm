@@ -39,24 +39,67 @@ export const recalculateTotalMaterialCost = (draftState: any) => {
   return cost;
 };
 
+/**
+ * MK de fallback quando o item ainda não tem markup definido.
+ * Espelha `CONFIG.DEFAULT_MARKUP` do backend e o default de
+ * `configuracoes_precificacao.markup_padrao`.
+ */
+export const DEFAULT_MARKUP = 1.5;
+
+/**
+ * Precificação do item do orçamento.
+ *
+ * Regra comercial: **preço de venda = custo × MK** (markup multiplicador).
+ * Ex.: custo R$ 260,00 com MK 3 → R$ 780,00.
+ *
+ * - `cost`: altera o custo e mantém o MK, recalculando o preço
+ * - `markup`: altera o MK e recalcula o preço
+ * - `price`: preço digitado à mão define o MK implícito (vira override)
+ *
+ * A margem real é sempre derivada de preço ÷ custo — nunca um valor de entrada.
+ */
 export const recalculatePrices = (
-  type: 'cost' | 'price' | 'margin',
+  type: 'cost' | 'price' | 'markup',
   value: number,
   currentDraft: any,
 ) => {
-  const cost = type === 'cost' ? value : currentDraft.custoUnitarioCalculado || 0;
-  let price = type === 'price' ? value : currentDraft.precoVendaUnitario || 0;
-  let margin = type === 'margin' ? value : currentDraft.margemLucro || 0;
+  const cost = type === 'cost' ? value : Number(currentDraft.custoUnitarioCalculado) || 0;
+  const currentMarkup =
+    Number(currentDraft.markup) > 0 ? Number(currentDraft.markup) : DEFAULT_MARKUP;
 
-  if (type === 'margin') {
-    price = cost * (1 + value / 100);
+  let price = type === 'price' ? value : Number(currentDraft.precoVendaUnitario) || 0;
+  let markup = currentMarkup;
+
+  if (type === 'markup') {
+    markup = value;
+    price = cost * value;
   } else if (type === 'price') {
-    margin = cost > 0 ? (price / cost - 1) * 100 : 0;
-  } else if (type === 'cost') {
-    price = cost * (1 + margin / 100);
+    markup = cost > 0 ? value / cost : 0;
+  } else {
+    price = cost * currentMarkup;
   }
 
-  return { cost, price, margin };
+  const margin = cost > 0 ? (price / cost - 1) * 100 : 0;
+
+  return { cost, price, markup, margin };
+};
+
+/**
+ * MK médio do orçamento: **média simples** dos MKs dos itens.
+ *
+ * Itens ainda sem MK (legado, antes do primeiro recálculo) entram com o MK padrão —
+ * o mesmo valor que o backend aplica neles no recálculo.
+ * Retorna `null` quando o orçamento não tem itens.
+ */
+export const calculateAverageMarkup = (itens: any[] | undefined | null): number | null => {
+  if (!Array.isArray(itens) || itens.length === 0) return null;
+
+  const soma = itens.reduce((acc, item) => {
+    const mk = Number(item?.markup);
+    return acc + (Number.isFinite(mk) && mk > 0 ? mk : DEFAULT_MARKUP);
+  }, 0);
+
+  return soma / itens.length;
 };
 
 export const formatCurrency = (value: number): string =>

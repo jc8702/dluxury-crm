@@ -24,6 +24,8 @@ export const quotationItemSchema = z.object({
   precoVendaUnitario: moneySchema,
   precoVendaSobrescrito: moneySchema.nullable().optional(),
   margemLucro: moneySchema,
+  // Markup multiplicador do item (preço de venda = custo × MK)
+  markup: moneySchema.optional(),
   observacoes: z.string().optional(),
   metadata: z
     .object({

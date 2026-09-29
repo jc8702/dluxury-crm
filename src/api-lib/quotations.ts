@@ -1,7 +1,7 @@
 import { db } from './drizzle-db.js';
 import { quotations, quotationItems, quotationBom } from '../db/schema/quotations.js';
 import { skuEngenharia, skuComponente } from '../db/schema/skus.js';
-import { eq, sql as dsql, and, inArray, or, ilike } from 'drizzle-orm';
+import { eq, sql as dsql, and, inArray, or, ilike, isNull } from 'drizzle-orm';
 import { auditLog, sql } from './_db.js';
 import { garantirSeedsFinanceiros } from './financeiro.js';
 import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
@@ -22,6 +22,9 @@ export class ValidationError extends Error {
 const CONFIG = {
   MAX_BATCH_SIZE: 50,
   DEFAULT_MARGEM: 30,
+  // Markup multiplicador de fallback (preço de venda = custo × MK) quando o tenant
+  // não tem `configuracoes_precificacao.markup_padrao`.
+  DEFAULT_MARKUP: 1.5,
   DEFAULT_VALIDADE_DIAS: 15,
   MAX_RETRY_ATTEMPTS: 3,
   QUERY_TIMEOUT_MS: 30000,
@@ -211,7 +214,10 @@ export async function recalcularOrcamento(orcId: string, tenantId: string) {
     const fatorPerda = Number(conf.fator_perda_padrao || 0) / 100;
     const moProducao = Number(conf.mo_producao_pct_padrao || 0) / 100;
     const moInstalacao = Number(conf.mo_instalacao_pct_padrao || 0) / 100;
-    const aliquotaImposto = Number(conf.aliquota_imposto || 0) / 100;
+    // MK herdado por item novo / item ainda sem markup.
+    const markupConf = Number(conf.markup_padrao);
+    const markupPadrao =
+      Number.isFinite(markupConf) && markupConf > 0 ? markupConf : CONFIG.DEFAULT_MARKUP;
 
     // 1. Buscar orçamento e itens em UMA query com join
     const orc = await tx.query.quotations.findFirst({
@@ -233,13 +239,9 @@ export async function recalcularOrcamento(orcId: string, tenantId: string) {
       throw new Error(`Orçamento ${orcId} não encontrado`);
     }
 
-    const margemGlobal = Number(orc.margemLucroPercentual || CONFIG.DEFAULT_MARGEM);
-    const taxaFinanceira = Number(orc.taxaFinanceiraPercentual || 0);
     const desconto = Number(orc.descontoPercentual || 0);
 
-    logger.debug(
-      `⚙️ Config: Margem=${margemGlobal}% | Taxa=${taxaFinanceira}% | Desconto=${desconto}%`,
-    );
+    logger.debug(`⚙️ Config: Markup padrão=${markupPadrao}x | Desconto=${desconto}%`);
 
     // 2. Preparar updates em batch (evita loop com múltiplas queries)
     const itemUpdates: Array<{
@@ -247,6 +249,7 @@ export async function recalcularOrcamento(orcId: string, tenantId: string) {
       custoCalc: string;
       precoVenda: string;
       margem: string;
+      markup: string;
     }> = [];
 
     let custoTotalAcumulado = 0;
@@ -269,26 +272,28 @@ export async function recalcularOrcamento(orcId: string, tenantId: string) {
         custoUnitario = Number(item.custoUnitarioCalculado || item.custoBaseEstoque || 0);
       }
 
-      // Aplicar fator de perda padrão, mão de obra de fabricação e de instalação
+      // Aplicar fator de perda padrão, mão de obra de fabricação e de instalação.
+      // São fatores de CUSTO (não de margem), então continuam compondo a base.
       const custoAjustado =
         custoUnitario * (1 + fatorPerda) * (1 + moProducao) * (1 + moInstalacao);
 
-      // Calcular preço de venda
+      // Markup do item: o MK próprio prevalece; item sem MK herda o padrão do tenant.
+      const mk = Number(item.markup) > 0 ? Number(item.markup) : markupPadrao;
+
+      // Preço de venda — regra comercial: preço = custo × MK (markup multiplicador).
+      // Taxa financeira e alíquota de imposto NÃO entram no preço; seguem cadastradas
+      // no cabeçalho apenas como referência comercial.
       let precoVenda = 0;
-      let margemReal = margemGlobal;
 
       if (item.possuiOverride && item.precoVendaSobrescrito) {
-        // Override manual: preço fixo, margem real líquida recalculada (descontando imposto do preço final)
+        // Override manual: preço fixo do item (ex.: módulo com valor próprio)
         precoVenda = Number(item.precoVendaSobrescrito);
-        const precoSemImposto = precoVenda / (1 + aliquotaImposto);
-        margemReal = custoAjustado > 0 ? (precoSemImposto / custoAjustado - 1) * 100 : 0;
       } else {
-        // Cálculo padrão: markup comercial + taxa financeira + imposto sobre o preço de venda
-        const baseVenda = custoAjustado * (1 + margemGlobal / 100);
-        const precoSemImposto = baseVenda * (1 + taxaFinanceira / 100);
-        precoVenda = precoSemImposto * (1 + aliquotaImposto);
-        margemReal = margemGlobal;
+        precoVenda = custoAjustado * mk;
       }
+
+      // Margem real é derivada do preço efetivamente praticado
+      const margemReal = custoAjustado > 0 ? (precoVenda / custoAjustado - 1) * 100 : 0;
 
       // Acumular totais
       custoTotalAcumulado += custoAjustado * qtdItem;
@@ -300,6 +305,7 @@ export async function recalcularOrcamento(orcId: string, tenantId: string) {
         custoCalc: validators.sanitizeNumeric(custoUnitario, 2),
         precoVenda: validators.sanitizeNumeric(precoVenda, 2),
         margem: validators.sanitizeNumeric(margemReal, 2),
+        markup: validators.sanitizeNumeric(mk, 4),
       });
     }
 
@@ -312,13 +318,15 @@ export async function recalcularOrcamento(orcId: string, tenantId: string) {
         SET custo_unitario_calculado = v.custo_calc::numeric,
             preco_venda_unitario = v.preco_venda::numeric,
             margem_lucro = v.margem::numeric,
+            markup = v.markup::numeric,
             updated_at = NOW()
         FROM (VALUES ${dsql.join(
           itemUpdates.map(
-            (upd) => dsql`(${upd.id}::uuid, ${upd.custoCalc}, ${upd.precoVenda}, ${upd.margem})`,
+            (upd) =>
+              dsql`(${upd.id}::uuid, ${upd.custoCalc}, ${upd.precoVenda}, ${upd.margem}, ${upd.markup})`,
           ),
           dsql`, `,
-        )}) AS v(id, custo_calc, preco_venda, margem)
+        )}) AS v(id, custo_calc, preco_venda, margem, markup)
         WHERE qi.id = v.id
       `);
     }
@@ -481,6 +489,31 @@ export function _resetRateLimit() {
   rateLimitMap.clear();
 }
 
+/**
+ * Garante que a coluna `quotation_items.markup` exista.
+ *
+ * A coluna estava declarada no schema Drizzle mas nenhuma migration a criava.
+ * Como o recálculo agora precifica por MK (preço = custo × MK), sem ela qualquer
+ * PUT em orçamento estouraria. O bootstrap de `_init` só roda ao chamar
+ * /api/init-db com a x-init-key, então garantimos aqui de forma idempotente e
+ * memoizada (uma vez por processo) — mesmo padrão já usado em production.ts.
+ */
+let markupColumnEnsured: Promise<void> | null = null;
+function ensureMarkupColumn(): Promise<void> {
+  if (!markupColumnEnsured) {
+    markupColumnEnsured = (async () => {
+      try {
+        await db.execute(
+          dsql`ALTER TABLE quotation_items ADD COLUMN IF NOT EXISTS markup NUMERIC(10,4)`,
+        );
+      } catch (err: any) {
+        logger.warn(`⚠️ [QUOTATIONS] Falha ao garantir a coluna markup: ${err?.message}`);
+      }
+    })();
+  }
+  return markupColumnEnsured;
+}
+
 const handleQuotationsCore: TenantHandler = async (req, res) => {
   const tenantId = req.tenantId;
   const user = req.tenantUser;
@@ -499,6 +532,8 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
   const url = new URL(req.url || '', 'http://localhost');
   const id = url.searchParams.get('id');
   const action = url.searchParams.get('action');
+
+  await ensureMarkupColumn();
 
   /**
    * Wrapper para retry em caso de deadlock (código 40P01 do Postgres)
@@ -1309,6 +1344,47 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
             return res.status(200).json({
               success: true,
               message: `Margem de ${margem}% aplicada a ${count[0].count} itens`,
+            });
+          }
+
+          if (action === 'apply-global-markup') {
+            const mk = Number(req.body?.markup);
+            if (!Number.isFinite(mk) || mk <= 0) throw new Error('Markup inválido');
+
+            // "Sem preço fixo" inclui linhas legadas com possui_override NULL.
+            const semPrecoFixo = or(
+              eq(quotationItems.possuiOverride, false),
+              isNull(quotationItems.possuiOverride),
+            );
+
+            // Aplica o MK apenas nos itens sem preço fixo: módulos com valor próprio e
+            // itens com preço digitado à mão preservam o que foi definido.
+            await db.transaction(async (tx: any) => {
+              await tx
+                .update(quotationItems)
+                .set({ markup: mk.toString() })
+                .where(and(eq(quotationItems.quotationId, id), semPrecoFixo));
+            });
+
+            await recalcularOrcamento(id, tenantId);
+
+            const contarItens = async (condicao: any) => {
+              const rows = await db
+                .select({ count: dsql`count(*)` })
+                .from(quotationItems)
+                .where(and(eq(quotationItems.quotationId, id), condicao));
+              return Number(rows?.[0]?.count || 0);
+            };
+
+            const aplicados = await contarItens(semPrecoFixo);
+            const fixos = await contarItens(eq(quotationItems.possuiOverride, true));
+
+            return res.status(200).json({
+              success: true,
+              message:
+                `MK ${mk}x aplicado a ${aplicados} de ${aplicados + fixos} itens` +
+                (fixos > 0 ? ` (${fixos} com preço fixo preservado)` : ''),
+              data: { aplicados, fixos, total: aplicados + fixos },
             });
           }
 

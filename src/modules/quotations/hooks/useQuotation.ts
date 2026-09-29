@@ -353,6 +353,36 @@ export function useQuotation(orcamentoId?: string) {
     [orcamentoId, carregar],
   );
 
+  // ✅ APLICAR MK (MARKUP) EM TODOS OS ITENS SEM PREÇO FIXO
+  const applyGlobalMarkup = useCallback(
+    async (markup: number) => {
+      if (!orcamentoId) return;
+      setLoading(true);
+      try {
+        const response = await fetch(
+          `/api/quotations?id=${orcamentoId}&action=apply-global-markup`,
+          {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify({ markup }),
+          },
+        );
+        const result = await response.json();
+        if (result.success) {
+          await carregar(orcamentoId);
+          return result;
+        }
+        throw new Error(result.error);
+      } catch (err: any) {
+        console.error('❌ [useQuotation] Erro ao aplicar MK global:', err);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [orcamentoId, carregar],
+  );
+
   // ✅ DELETAR ORÇAMENTO COMPLETO
   const deletarOrcamento = useCallback(async (id: string) => {
     try {
@@ -391,6 +421,7 @@ export function useQuotation(orcamentoId?: string) {
     bulkUpdateItems,
     resetToGlobalMargin,
     applyGlobalMargin,
+    applyGlobalMarkup,
     deletarOrcamento,
     carregar: () => (orcamentoId ? carregar(orcamentoId) : null),
   };

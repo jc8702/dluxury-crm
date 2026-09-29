@@ -347,7 +347,84 @@ describe('Módulo de Orçamentos PRO', () => {
       ).rejects.toThrow('Orçamento 3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2 não encontrado');
     });
 
-    it('deve recalcular valores considerando taxas operacionais de configuracoes_precificacao', async () => {
+    it('deve aplicar MK do item: custo 260 × MK 3 = preço 780 (exemplo Chapa Branca)', async () => {
+      const mockTx = {
+        execute: vi.fn().mockResolvedValue({ rows: [{ markup_padrao: 1.5 }] }),
+        query: {
+          quotations: {
+            findFirst: vi.fn().mockResolvedValue({
+              id: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2',
+              descontoPercentual: '0',
+              itens: [
+                {
+                  id: 'item-chapa',
+                  quantidade: '10',
+                  custoUnitarioCalculado: '260.00',
+                  markup: '3',
+                  possuiOverride: false,
+                },
+              ],
+            }),
+          },
+        },
+        update: vi.fn().mockReturnThis(),
+        set: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+      };
+
+      vi.mocked(db.transaction).mockImplementation(async (callback: any) =>
+        callback(mockTx as any),
+      );
+
+      const result = await recalcularOrcamento(
+        '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2',
+        TEST_TENANT_ID,
+      );
+
+      // 260 × 3 = 780 por unidade; 10 unidades = 7.800
+      expect(result.custoTotal).toBeCloseTo(2600, 2);
+      expect(result.vendaTotal).toBeCloseTo(7800, 2);
+    });
+
+    it('deve usar o MK padrão do tenant quando o item ainda não tem markup', async () => {
+      const mockTx = {
+        execute: vi.fn().mockResolvedValue({ rows: [{ markup_padrao: 2.5 }] }),
+        query: {
+          quotations: {
+            findFirst: vi.fn().mockResolvedValue({
+              id: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2',
+              descontoPercentual: '0',
+              itens: [
+                {
+                  id: 'item-sem-mk',
+                  quantidade: '1',
+                  custoUnitarioCalculado: '100.00',
+                  markup: null,
+                  possuiOverride: false,
+                },
+              ],
+            }),
+          },
+        },
+        update: vi.fn().mockReturnThis(),
+        set: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+      };
+
+      vi.mocked(db.transaction).mockImplementation(async (callback: any) =>
+        callback(mockTx as any),
+      );
+
+      const result = await recalcularOrcamento(
+        '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2',
+        TEST_TENANT_ID,
+      );
+
+      // 100 × 2.5 (markup_padrao do tenant) = 250
+      expect(result.vendaTotal).toBeCloseTo(250, 2);
+    });
+
+    it('deve recalcular aplicando o custo ajustado (perda/MO) sobre o MK padrão', async () => {
       const mockTx = {
         execute: vi.fn().mockResolvedValue({
           rows: [
@@ -355,7 +432,7 @@ describe('Módulo de Orçamentos PRO', () => {
               fator_perda_padrao: 10, // 10%
               mo_producao_pct_padrao: 20, // 20%
               mo_instalacao_pct_padrao: 5, // 5%
-              aliquota_imposto: 15, // 15%
+              markup_padrao: 1.5, // MK herdado pelo item
             },
           ],
         }),
@@ -394,12 +471,10 @@ describe('Módulo de Orçamentos PRO', () => {
       expect(result.itensAtualizados).toBe(1);
       // Custo base: 100
       // Custo ajustado: 100 * 1.10 (perda) * 1.20 (fabrica) * 1.05 (instalacao) = 138.60
-      // Preço base: 138.60 * 1.30 (margem) = 180.18
-      // Preço c/ taxa: 180.18 * 1.02 (taxa financ) = 183.7836
-      // Preço final c/ imposto: 183.7836 * 1.15 (imposto) = 211.35114 -> arredondado para 211.35
-      // Venda Total (2 itens c/ desconto 5%): (211.35114 * 2) * 0.95 = 401.567 -> 401.57
+      // Preço de venda: 138.60 × 1.5 (MK padrão do tenant) = 207.90
+      // Venda Total (2 itens c/ desconto 5%): (207.90 * 2) * 0.95 = 395.01
       expect(result.custoTotal).toBeCloseTo(277.2, 1); // 138.60 * 2
-      expect(result.vendaTotal).toBeCloseTo(401.57, 1);
+      expect(result.vendaTotal).toBeCloseTo(395.01, 1);
     });
   });
 
@@ -734,6 +809,51 @@ describe('Módulo de Orçamentos PRO', () => {
       const res = mockRes();
       await handleQuotations(req, res);
       expect(res._s()).toBe(200);
+    });
+
+    it('deve aplicar o MK nos itens sem preço fixo (?action=apply-global-markup)', async () => {
+      vi.mocked(db.query.quotations.findFirst).mockResolvedValue({
+        id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      });
+      // 1ª contagem: itens aplicáveis (sem override); 2ª: itens com preço fixo
+      vi.mocked(db.select)
+        .mockReturnValueOnce({
+          from: () => ({ where: () => Promise.resolve([{ count: '2' }]) }),
+        } as any)
+        .mockReturnValueOnce({
+          from: () => ({ where: () => Promise.resolve([{ count: '1' }]) }),
+        } as any);
+
+      const req = mockReq({
+        method: 'PUT',
+        url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=apply-global-markup',
+        body: { markup: 3 },
+      });
+      const res = mockRes();
+      await handleQuotations(req, res);
+
+      expect(res._s()).toBe(200);
+      expect(res._d().success).toBe(true);
+      expect(res._d().data).toEqual({ aplicados: 2, fixos: 1, total: 3 });
+      expect(res._d().message).toContain('3x');
+      expect(res._d().message).toContain('preço fixo preservado');
+    });
+
+    it('deve rejeitar MK inválido (?action=apply-global-markup)', async () => {
+      vi.mocked(db.query.quotations.findFirst).mockResolvedValue({
+        id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      });
+
+      const req = mockReq({
+        method: 'PUT',
+        url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=apply-global-markup',
+        body: { markup: 0 },
+      });
+      const res = mockRes();
+      await handleQuotations(req, res);
+
+      expect(res._s()).not.toBe(200);
+      expect(res._d().success).toBe(false);
     });
 
     it('deve atualizar itens em lote no PUT (?action=bulk-update-items)', async () => {

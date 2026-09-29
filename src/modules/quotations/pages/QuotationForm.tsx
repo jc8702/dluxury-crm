@@ -11,6 +11,7 @@ import {
   Select,
   Badge,
   Table,
+  FieldWrapper,
 } from '@/components/ui';
 import type { Column } from '@/components/ui/Table';
 import {
@@ -31,6 +32,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useQuotation } from '../hooks/useQuotation';
+import { calculateAverageMarkup } from '@/utils/calculations';
 import { exportBudgetToPDF } from '../services/export-pdf';
 import { ImportarProjeto } from '../components/ImportarProjeto';
 import { ModalEnviarCliente } from '../components/ModalEnviarCliente';
@@ -128,7 +130,7 @@ export default function QuotationForm() {
     importItems,
     updateItem,
     removerItem,
-    applyGlobalMargin,
+    applyGlobalMarkup,
     deletarOrcamento,
     error,
     carregar,
@@ -150,6 +152,34 @@ export default function QuotationForm() {
     validadeDias: 0,
     clienteId: '',
   });
+
+  // ── MK médio: média simples dos MKs dos itens ──────────────────────────────
+  const mkMedioCalculado = calculateAverageMarkup(quotation?.itens);
+  const [mkMedioInput, setMkMedioInput] = useState('');
+  const [isApplyingMk, setIsApplyingMk] = useState(false);
+
+  // O campo espelha o MK médio dos itens: quando um MK individual é alterado e o
+  // orçamento recarrega, o valor exibido se atualiza sozinho.
+  useEffect(() => {
+    setMkMedioInput(mkMedioCalculado === null ? '' : mkMedioCalculado.toFixed(2));
+  }, [mkMedioCalculado]);
+
+  const handleApplyMkMedio = async () => {
+    const valor = parseFloat(String(mkMedioInput).replace(',', '.'));
+    if (!Number.isFinite(valor) || valor <= 0) {
+      toastError('Informe um MK maior que zero.');
+      return;
+    }
+    setIsApplyingMk(true);
+    try {
+      const res = await applyGlobalMarkup(valor);
+      toastSuccess(res?.message || 'MK aplicado aos itens.');
+    } catch (err: any) {
+      toastError('Erro', err.message);
+    } finally {
+      setIsApplyingMk(false);
+    }
+  };
 
   const [pagination, setPagination] = useState({
     page: 1,
@@ -658,34 +688,41 @@ export default function QuotationForm() {
                 placeholder="Selecione um cliente..."
                 options={clients.map((c) => ({ value: c.id, label: c.nome }))}
               />
-              <Input
-                label="Margem de Lucro (%)"
-                type="number"
-                size="lg"
-                value={localComercial.margemLucroPercentual}
-                onChange={(e) =>
-                  setLocalComercial({
-                    ...localComercial,
-                    margemLucroPercentual: parseFloat(e.target.value) || 0,
-                  })
-                }
-                rightIcon={
-                  <Button
-                    size="xs"
-                    variant="primary"
-                    onClick={async () => {
-                      try {
-                        const res = await applyGlobalMargin(localComercial.margemLucroPercentual);
-                        toastSuccess(res.message);
-                      } catch (err: any) {
-                        toastError('Erro', err.message);
-                      }
+              {/* A precificação é por item (preço = custo × MK). Este campo mostra o
+                  MK médio e o Aplicar redistribui o valor para os itens sem preço
+                  fixo — o botão fica FORA do `rightIcon` do Input, que aplica
+                  pointer-events-none e o tornava não clicável. */}
+              <FieldWrapper
+                id="mk-medio"
+                label="MK Médio (x)"
+                hint="Média simples dos MKs dos itens"
+              >
+                <div className="flex gap-2">
+                  <Input
+                    id="mk-medio"
+                    type="number"
+                    step="0.01"
+                    size="lg"
+                    className="flex-1"
+                    value={mkMedioInput}
+                    placeholder={mkMedioCalculado === null ? 'sem itens' : undefined}
+                    disabled={mkMedioCalculado === null}
+                    onChange={(e) => setMkMedioInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleApplyMkMedio();
                     }}
+                  />
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    onClick={handleApplyMkMedio}
+                    isLoading={isApplyingMk}
+                    disabled={mkMedioCalculado === null}
                   >
                     Aplicar
                   </Button>
-                }
-              />
+                </div>
+              </FieldWrapper>
               <Input
                 label="Taxa Financeira (%)"
                 type="number"

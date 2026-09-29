@@ -96,6 +96,69 @@ test.describe('Modulo Orcamentos — formulário ponta a ponta (TSK-10)', () => 
     expect(puts[2].status).toBe('RASCUNHO');
   });
 
+  test('MK medio reflete os itens e o Aplicar redistribui o MK', async ({ page }) => {
+    // 2 itens sem preço fixo + 1 com preço fixo (módulo com valor próprio).
+    // Média simples inicial: (4 + 2 + 1) / 3 = 2.33
+    captured = setupFormApiMock(page, {
+      quotation: {
+        itens: [
+          {
+            id: 'item-mk-1',
+            nomeCustomizado: 'Chapa A',
+            quantidade: 1,
+            unidadeMedida: 'UN',
+            custoUnitarioCalculado: 100,
+            precoVendaUnitario: 400,
+            markup: 4,
+            possuiOverride: false,
+          },
+          {
+            id: 'item-mk-2',
+            nomeCustomizado: 'Chapa B',
+            quantidade: 1,
+            unidadeMedida: 'UN',
+            custoUnitarioCalculado: 100,
+            precoVendaUnitario: 200,
+            markup: 2,
+            possuiOverride: false,
+          },
+          {
+            id: 'item-mk-3',
+            nomeCustomizado: 'Modulo com preco fixo',
+            quantidade: 1,
+            unidadeMedida: 'UN',
+            custoUnitarioCalculado: 500,
+            precoVendaUnitario: 500,
+            markup: 1,
+            possuiOverride: true,
+            precoVendaSobrescrito: 500,
+          },
+        ],
+      },
+    });
+
+    await page.goto('/?id=quotation-e2e-001#/quotations');
+    await expect(page.getByText(/configurações comerciais/i).first()).toBeVisible({
+      timeout: 10000,
+    });
+
+    // O campo já vem preenchido com a média simples dos MKs dos itens
+    const mkMedio = page.getByLabel('MK Médio (x)');
+    await expect(mkMedio).toHaveValue('2.33', { timeout: 10000 });
+
+    // ── Alterar o MK médio e aplicar ────────────────────────────────────────
+    await mkMedio.fill('6');
+    await page.getByRole('button', { name: 'Aplicar', exact: true }).click();
+
+    // O botão dispara o PUT (era o bug: pointer-events-none no rightIcon do Input)
+    await expect.poll(() => (captured['PUT_APPLY_MARKUP'] || []).length, { timeout: 5000 }).toBe(1);
+    const aplicado = (captured['PUT_APPLY_MARKUP'] as Record<string, unknown>[])[0];
+    expect(Number(aplicado.markup)).toBe(6);
+
+    // Itens sem preço fixo viram 6; o de preço fixo mantém MK 1 → média 13/3 = 4.33
+    await expect(mkMedio).toHaveValue('4.33', { timeout: 10000 });
+  });
+
   test('campos principais do orcamento estao presentes e editaveis', async ({ page }) => {
     await page.goto('/?id=quotation-e2e-001#/quotations');
     await expect(page.getByText(/configurações comerciais/i).first()).toBeVisible({
@@ -103,12 +166,14 @@ test.describe('Modulo Orcamentos — formulário ponta a ponta (TSK-10)', () => 
     });
 
     await expect(page.getByLabel('Cliente')).toBeVisible();
-    await expect(page.getByLabel('Margem de Lucro (%)')).toBeVisible();
     await expect(page.getByLabel('Taxa Financeira (%)')).toBeVisible();
     await expect(page.getByLabel('Validade (Dias)')).toBeVisible();
 
+    // A margem global saiu da tela: a precificação é por item, pelo campo Markup (MK)
+    await expect(page.getByLabel('Margem de Lucro (%)')).toHaveCount(0);
+
     const numericInputs = page.locator('input[type="number"]');
-    expect(await numericInputs.count()).toBeGreaterThanOrEqual(3);
+    expect(await numericInputs.count()).toBeGreaterThanOrEqual(2);
   });
 
   test('seleciona cliente no dropdown do orcamento', async ({ page }) => {

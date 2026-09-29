@@ -63,6 +63,8 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
     precoVendaUnitario: Number(item.precoVendaUnitario) || 0,
     precoVendaSobrescrito: item.precoVendaSobrescrito ? Number(item.precoVendaSobrescrito) : null,
     margemLucro: Number(item.margemLucro) || 0,
+    // MK do item: quando ainda não existe, o backend aplica o markup padrão do tenant
+    markup: Number(item.markup) > 0 ? Number(item.markup) : 1.5,
     observacoes: item.observacoes || '',
     metadata: safeParseMetadata(item.metadata),
   };
@@ -98,16 +100,21 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
   }, [isEditingExternal, prevIsEditingExternal, handleSubmit]);
 
   const handleRecalculatePrices = (
-    type: 'cost' | 'price' | 'margin',
+    type: 'cost' | 'price' | 'markup',
     value: number,
     currentDraft: any,
   ) => {
-    const { cost, price, margin } = recalculatePrices(type, value, currentDraft);
+    const { cost, price, markup, margin } = recalculatePrices(type, value, currentDraft);
     setValue('custoUnitarioCalculado', cost);
     setValue('precoVendaUnitario', price);
+    setValue('markup', markup);
     setValue('margemLucro', margin);
+    // Digitar o preço à mão cria override; mexer no MK ou no custo devolve o
+    // controle ao markup (senão o preço fixo antigo continuaria vencendo).
     if (type === 'price') {
       setValue('precoVendaSobrescrito', price);
+    } else {
+      setValue('precoVendaSobrescrito', null);
     }
   };
 
@@ -131,6 +138,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
       custoUnitarioCalculado: data.custoUnitarioCalculado.toFixed(2),
       precoVendaUnitario: data.precoVendaUnitario.toFixed(2),
       precoVendaSobrescrito: data.precoVendaSobrescrito?.toFixed(2) || null,
+      markup: Number(data.markup || 0).toFixed(4),
       metadata: data.metadata,
     };
 
@@ -457,21 +465,25 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
               </div>
 
               <div className="flex justify-between items-center pt-2 border-t border-border">
-                <span className="text-muted-foreground text-xs font-black uppercase">
-                  Margem Real (%)
-                </span>
+                <div className="flex items-center gap-2">
+                  <div className="w-3.5 h-3.5" />
+                  <span className="text-foreground text-xs font-bold uppercase tracking-tighter">
+                    Markup (MK)
+                  </span>
+                </div>
                 {isEditing ? (
                   <Controller
-                    name="margemLucro"
+                    name="markup"
                     control={control}
                     render={({ field }) => (
                       <Input
                         type="number"
-                        className="text-right w-20 h-8 text-sm px-2 py-1 font-black font-mono bg-background border-border"
+                        step="0.01"
+                        className="border-primary/50 text-right w-24 h-8 text-sm px-2 py-1 font-black font-mono text-primary"
                         value={field.value}
                         onChange={(e) =>
                           handleRecalculatePrices(
-                            'margin',
+                            'markup',
                             parseFloat(e.target.value) || 0,
                             getValues(),
                           )
@@ -480,10 +492,28 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                     )}
                   />
                 ) : (
-                  <Badge tone={Number(item.margemLucro) >= 30 ? 'success' : 'danger'}>
-                    {Number(item.margemLucro || 0).toFixed(1)}%
-                  </Badge>
+                  <span className="text-foreground font-mono font-black">
+                    {Number(item.markup || 0).toFixed(2)}x
+                  </span>
                 )}
+              </div>
+
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <div className="w-3.5 h-3.5" />
+                  <span className="text-muted-foreground text-xs font-bold uppercase tracking-tighter">
+                    Margem Real (%)
+                  </span>
+                </div>
+                <Badge
+                  tone={
+                    Number(isEditing ? watchAll.margemLucro : item.margemLucro) >= 30
+                      ? 'success'
+                      : 'danger'
+                  }
+                >
+                  {Number((isEditing ? watchAll.margemLucro : item.margemLucro) || 0).toFixed(1)}%
+                </Badge>
               </div>
             </div>
 
