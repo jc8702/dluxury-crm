@@ -12,7 +12,13 @@ const databaseUrl = (
   ''
 ).replace(/"/g, '');
 
-if (!databaseUrl && typeof window === 'undefined') {
+// Detecção de runtime sem citar globais de browser: este módulo também é
+// importado por código de cliente (src/lib/db.ts, RetalhosRepository) e um
+// `typeof window` aqui seria um erro de lint (no-restricted-globals) por ser
+// exatamente o padrão que esconde ReferenceError no servidor.
+const isServerRuntime = typeof process !== 'undefined' && !!process.versions?.node;
+
+if (!databaseUrl && isServerRuntime) {
   logger.warn('DATABASE_URL ausente no ambiente de servidor.');
 }
 

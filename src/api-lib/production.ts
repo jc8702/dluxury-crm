@@ -211,11 +211,12 @@ async function updateOPDetails(req: any, res: any, tenantId: string, user: any) 
   // If changed peças, recalcula previsões
   await syncQueueForecasting(tenantId);
 
-  try {
-    window.dispatchEvent(new CustomEvent('op_updated', { detail: { op_id } }));
-  } catch {
-    // Ignore window reference error on server-side
-  }
+  // NOTA: aqui existia um `window.dispatchEvent('op_updated')` dentro de um
+  // try/catch. Este handler roda apenas no servidor (importado por api/index.ts),
+  // onde `window` não existe: o dispatch sempre caía no catch silencioso, então o
+  // evento nunca chegou aos listeners do cliente (ProductionPanel.tsx:78 e
+  // ProductionList.tsx:259). Removido por ser código morto — quem quiser refresh
+  // em tempo real precisa disparar o evento no cliente a partir da resposta.
 
   return res.status(200).json({ success: true, data: atualizada });
 }

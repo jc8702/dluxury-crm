@@ -168,6 +168,59 @@ export default tseslint.config(
       camelcase: 'off',
     },
   },
+  // Código de servidor (Serverless/Vercel) — proibido usar globais de browser.
+  //
+  // O `tsconfig.app.json` liga a lib DOM para todo `src`/`api`, e este config
+  // declara `globals.browser` para todo `**/*.ts`. Resultado: o tsc enxerga
+  // globais do jsdom (`status`, `name`, `length`, `top`, ...) como nomes
+  // declarados e não acusa o ReferenceError que eles causam no runtime Node.
+  // Foi exatamente assim que o achado A2 (`status` nunca declarada em
+  // src/api-lib/rh.ts) virou um 500 em produção sem nenhum aviso do typecheck.
+  {
+    files: ['api/**/*.ts', 'src/api-lib/**/*.ts'],
+    rules: {
+      'no-restricted-globals': [
+        'error',
+        'window',
+        'document',
+        'navigator',
+        'location',
+        'history',
+        'screen',
+        'self',
+        'top',
+        'parent',
+        'frames',
+        'alert',
+        'confirm',
+        'prompt',
+        'print',
+        'open',
+        'close',
+        'focus',
+        'blur',
+        'scroll',
+        'scrollTo',
+        'scrollBy',
+        'getComputedStyle',
+        'requestAnimationFrame',
+        'cancelAnimationFrame',
+        'localStorage',
+        'sessionStorage',
+        'XMLHttpRequest',
+        'MutationObserver',
+        'IntersectionObserver',
+        'ResizeObserver',
+        'matchMedia',
+        'customElements',
+        'status',
+        'name',
+        'length',
+        'origin',
+        'event',
+      ],
+    },
+  },
   // Arquivos de teste (vitest) — jsdom globals ativos
   {
     files: ['**/*.test.{ts,tsx}', '**/__tests__/**/*.{ts,tsx}'],
