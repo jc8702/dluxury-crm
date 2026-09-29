@@ -1,6 +1,16 @@
 const API_BASE = '/api';
 const TOKEN_KEY = 'dluxury_token';
 
+/**
+ * Timeout padrão das chamadas de API (mesmo valor já usado no `ai.chat`).
+ *
+ * Sem timeout, uma requisição que nunca responde deixava a UI presa em
+ * estados de carregamento para sempre — ex.: o botão do modal de Cliente
+ * ficava em "Salvando..." indefinidamente esperando um endpoint travado.
+ * Pode ser sobrescrito por chamada via `options.timeoutMs`.
+ */
+const DEFAULT_TIMEOUT_MS = 45000;
+
 export const setAuthToken = (token: string) => localStorage.setItem(TOKEN_KEY, token);
 export const removeAuthToken = () => localStorage.removeItem(TOKEN_KEY);
 export const hasAuthToken = () => !!localStorage.getItem(TOKEN_KEY);
@@ -10,6 +20,7 @@ export async function apiCall<T>(
   action: string,
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' = 'GET',
   body?: unknown,
+  options: { timeoutMs?: number } = {},
 ): Promise<T> {
   const url = action.startsWith('/') ? action : `${API_BASE}/${action}`;
   const token = getToken();
@@ -33,41 +44,61 @@ export async function apiCall<T>(
     // DEV mode check
   }
 
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  const controller = new AbortController();
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-  if (!res.ok) {
-    const json = await res.json().catch(() => ({}));
-    console.error(`[API ERROR] ${method} ${url}:`, json);
-    if (res.status === 402) {
-      window.dispatchEvent(
-        new CustomEvent('billing-blocked', {
-          detail: { error: json.error || 'Sua assinatura está suspensa por falta de pagamento.' },
-        }),
+  try {
+    const res = await fetch(url, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      console.error(`[API ERROR] ${method} ${url}:`, json);
+      if (res.status === 402) {
+        window.dispatchEvent(
+          new CustomEvent('billing-blocked', {
+            detail: {
+              error: json.error || 'Sua assinatura está suspensa por falta de pagamento.',
+            },
+          }),
+        );
+      }
+      throw new Error(json.error || json.message || `HTTP ${res.status}`);
+    }
+
+    const json: any = await res.json();
+
+    // Log de auditoria para ambiente dev
+    if (isDev) {
+      // Audit logger placeholder
+    }
+
+    // Se a resposta seguir o padrão { success, data }, retornamos apenas o data
+    if (json && typeof json === 'object' && 'success' in json) {
+      if (json.success === false) {
+        throw new Error(json.error || json.message || 'Erro desconhecido na API');
+      }
+      return json.data === undefined ? json : json.data;
+    }
+
+    return json;
+  } catch (error: any) {
+    if (error?.name === 'AbortError') {
+      const timeoutError: any = new Error(
+        `Tempo de resposta esgotado (${Math.round(timeoutMs / 1000)}s) em ${method} ${url}. Verifique sua conexão e tente novamente.`,
       );
+      timeoutError.status = 408;
+      throw timeoutError;
     }
-    throw new Error(json.error || json.message || `HTTP ${res.status}`);
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  const json: any = await res.json();
-
-  // Log de auditoria para ambiente dev
-  if (isDev) {
-    // Audit logger placeholder
-  }
-
-  // Se a resposta seguir o padrão { success, data }, retornamos apenas o data
-  if (json && typeof json === 'object' && 'success' in json) {
-    if (json.success === false) {
-      throw new Error(json.error || json.message || 'Erro desconhecido na API');
-    }
-    return json.data === undefined ? json : json.data;
-  }
-
-  return json;
 }
 
 export const api = {

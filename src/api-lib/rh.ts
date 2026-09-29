@@ -438,6 +438,7 @@ const handleRHCore: TenantHandler = async (req, res) => {
       if (req.method === 'GET') {
         if (!requireAdmin(req, res)) return;
         const competencia = req.query?.competencia;
+        const status = req.query?.status;
         // drizzle tag cannot do dynamic filter easily, use Pool style? Use `sql` string building fallback to Pool?
         // Use raw pool via sql.query? Instead use conditional queries with separate branches
         if (competencia && status) {

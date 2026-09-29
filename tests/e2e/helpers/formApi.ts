@@ -12,6 +12,7 @@ import type { Page } from '@playwright/test';
  * - /api/quotations (GET lista/detalhe, POST cria rascunho, PUT atualiza header)
  * - /api/quotations?action=search-skus (busca unificada: módulo/estoque/material)
  * - /api/quotations?action=add-item    (adiciona item e persiste em `itens`)
+ * - /api/agenda, /api/projects (carga do CRM no `reloadCRMData`)
  * - /api/auth, /api/dashboard, /api/notifications (dados de suporte)
  */
 export function setupFormApiMock(page: Page) {
@@ -139,6 +140,15 @@ export function setupFormApiMock(page: Page) {
   });
 
   // ── Suporte (auth, dashboard, notificações) ───────────────────────────────
+  // ── Carga do CRM (`useCrmStore.reloadCRMData`) ────────────────────────────
+  // `addClient`/`addProject` aguardam `Promise.all([clients, agenda, projects,
+  // quotations])` ANTES de mostrar o toast e fechar o modal. Sem mock, `agenda`
+  // e `projects` caem na API real (proxy do Vite) e, sob carga, demoram mais do
+  // que o timeout do teste: o botão fica preso em "Salvando...", o toast nunca
+  // aparece e o teste morre (era a causa do flaky em clients.spec.ts:31).
+  page.route('**/api/agenda**', (route) => route.fulfill(ok([])));
+  page.route('**/api/projects**', (route) => route.fulfill(ok([])));
+
   page.route('**/api/dashboard**', (route) => route.fulfill(ok({})));
   page.route('**/api/notifications**', (route) => route.fulfill(ok([])));
 

@@ -63,15 +63,28 @@ test.describe('Modulo Clientes — formulário ponta a ponta (TSK-10)', () => {
     // ── Submissão ──
     await dialog.locator('button[type="submit"]').click();
 
-    // Toast de sucesso (feedback global — TSK-09)
-    await expect(page.locator('[role="alert"]').first()).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText(/cadastrado com sucesso/i)).toBeVisible();
+    // Toast de sucesso (feedback global — TSK-09).
+    // O toast é localizado já filtrado pelo texto esperado, numa única assertion
+    // com folga de timeout: o `ToastContext` auto-dispensa o toast em 5s, então
+    // duas assertions encadeadas de 5s podiam consumir o tempo de vida dele sob
+    // carga (execução serial longa), e o `[role="alert"]` genérico ainda podia
+    // casar com um alerta que não fosse o do cadastro.
+    const toastSucesso = page
+      .locator('[role="alert"]')
+      .filter({ hasText: /cadastrado com sucesso/i });
+    await expect(toastSucesso).toBeVisible({ timeout: 15000 });
+
+    // O modal fecha logo após o POST: o reload do CRM (agenda/projetos/
+    // orçamentos) agora roda em background e não bloqueia o fechamento.
+    await expect(page.locator('[role="dialog"]')).toBeHidden({ timeout: 5000 });
 
     // Payload capturado na interceptação de rede
     // (telefone chega normalizado — o Zod do app remove a máscara)
     const telefoneNormalizado = CLIENTE_FIXO.telefone.replace(/\D/g, '');
+    await expect
+      .poll(() => (captured['POST_CLIENT'] || []).length, { timeout: 15000 })
+      .toBeGreaterThan(0);
     const posts = (captured['POST_CLIENT'] || []) as Record<string, unknown>[];
-    expect(posts.length).toBeGreaterThan(0);
     const payload = posts[0];
     expect(payload.nome).toBe(CLIENTE_FIXO.nome);
     expect(payload.telefone).toBe(telefoneNormalizado);

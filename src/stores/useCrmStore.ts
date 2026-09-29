@@ -139,11 +139,15 @@ export const useCrmStore = create<CrmState>((set, get) => ({
 
   addClient: async (data: any) => {
     await api.clients.create(data);
-    await get().reloadCRMData();
+    // O reload do CRM (clientes/agenda/projetos/orçamentos) é disparado em
+    // background: a UI não deve ficar presa em "Salvando..." esperando
+    // endpoints que não fazem parte da criação do cliente. `reloadCRMData`
+    // trata os próprios erros (console.error), então não há rejeição solta.
+    void get().reloadCRMData();
   },
   updateClient: async (id: string, data: any) => {
     await api.clients.update(id, data);
-    await get().reloadCRMData();
+    void get().reloadCRMData();
   },
   removeClient: async (id: string) => {
     await api.clients.delete(id);
